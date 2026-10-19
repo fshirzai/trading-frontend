@@ -1,0 +1,28 @@
+{
+  "name": "trading-company-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
+    "build": "next build --webpack",
+    "start": "node --env-file-if-exists=.env.local scripts/serve.mjs",
+    "test": "node --test tests/*.test.js",
+    "test:integration": "node --test tests/backend.integration.js",
+    "test:ui": "node --import ./tests/register.mjs --test tests/ui.test.jsx",
+    "test:dev": "node --test tests/dev.system.js"
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.3.3",
+    "jsdom": "26.1.0",
+    "esbuild": "0.28.2"
+  }
+}

@@ -1,0 +1,1165 @@
+{
+  "POST /notifications/{id}/read": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /reconciliation/statements": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "account": {
+        "type": "string",
+        "enum": ["Bank", "Cash"]
+      },
+      "openingCents": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+      },
+      "closingCents": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+      },
+      "csv": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 90000
+      }
+    },
+    "required": ["name", "account", "openingCents", "closingCents", "csv"],
+    "additionalProperties": false
+  },
+  "POST /reconciliation/lines/{id}/match": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "journal": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      }
+    },
+    "required": ["journal"],
+    "additionalProperties": false
+  },
+  "POST /reconciliation/statements/{id}/close": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /auth/verify-email": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "token": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{64}$"
+      }
+    },
+    "required": ["token"],
+    "additionalProperties": false
+  },
+  "POST /auth/resend-verification": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string",
+        "maxLength": 254,
+        "format": "email",
+        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+      }
+    },
+    "required": ["email"],
+    "additionalProperties": false
+  },
+  "POST /auth/forgot-password": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string",
+        "maxLength": 254,
+        "format": "email",
+        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+      }
+    },
+    "required": ["email"],
+    "additionalProperties": false
+  },
+  "POST /auth/reset-password": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "token": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{64}$"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      }
+    },
+    "required": ["token", "password"],
+    "additionalProperties": false
+  },
+  "POST /auth/mfa/enroll": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "password": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      }
+    },
+    "required": ["password"],
+    "additionalProperties": false
+  },
+  "POST /auth/mfa/confirm": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "code": {
+        "type": "string",
+        "pattern": "^\\d{6}$"
+      }
+    },
+    "required": ["code"],
+    "additionalProperties": false
+  },
+  "POST /auth/mfa/disable": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "password": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      },
+      "code": {
+        "type": "string",
+        "minLength": 6,
+        "maxLength": 24
+      }
+    },
+    "required": ["password", "code"],
+    "additionalProperties": false
+  },
+  "POST /auth/register": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "email": {
+        "type": "string",
+        "maxLength": 254,
+        "format": "email",
+        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      },
+      "country": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "required": ["name", "email", "password"],
+    "additionalProperties": false
+  },
+  "POST /auth/login": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string",
+        "maxLength": 254,
+        "format": "email",
+        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "mfaCode": {
+        "type": "string",
+        "pattern": "^(\\d{6}|[a-f\\d]{24})$"
+      }
+    },
+    "required": ["email", "password"],
+    "additionalProperties": false
+  },
+  "POST /auth/refresh": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /auth/logout": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /auth/logout-all": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /users": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "email": {
+        "type": "string",
+        "maxLength": 254,
+        "format": "email",
+        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      },
+      "role": {
+        "type": "string",
+        "enum": ["manager", "seller", "procurement"]
+      }
+    },
+    "required": ["name", "email", "password", "role"],
+    "additionalProperties": false
+  },
+  "PATCH /users/{id}": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "role": {
+        "type": "string",
+        "enum": ["manager", "seller", "procurement", "customer"]
+      }
+    },
+    "additionalProperties": false
+  },
+  "POST /auth/change-password": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "oldPassword": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      },
+      "newPassword": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 128
+      },
+      "mfaCode": {
+        "type": "string",
+        "minLength": 6,
+        "maxLength": 24
+      }
+    },
+    "required": ["oldPassword", "newPassword"],
+    "additionalProperties": false
+  },
+  "POST /records/product": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "ps": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fa": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": ["en"],
+        "additionalProperties": false
+      },
+      "category": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "grade": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "origin": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "packaging": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "moq": {
+        "default": 0,
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      }
+    },
+    "required": ["name", "moq"],
+    "additionalProperties": false
+  },
+  "PATCH /records/product/{id}": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "ps": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "fa": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": ["en"],
+        "additionalProperties": false
+      },
+      "category": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "grade": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "origin": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "packaging": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "moq": {
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      },
+      "active": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "POST /records/party": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "type": {
+        "type": "string",
+        "enum": ["customer", "supplier"]
+      },
+      "country": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "email": {
+        "type": "string",
+        "maxLength": 254,
+        "format": "email",
+        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "address": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": ["name", "type"],
+    "additionalProperties": false
+  },
+  "POST /inquiries": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "customer": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "product": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000
+      },
+      "destination": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "source": {
+        "default": "website",
+        "type": "string",
+        "enum": ["website", "whatsapp", "phone", "office"]
+      }
+    },
+    "required": ["product", "quantity", "source"],
+    "additionalProperties": false
+  },
+  "POST /inquiries/{id}/proforma": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "productTotal": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "deliveryFees": {
+        "default": 0,
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      },
+      "border": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "splitIncluded": {
+        "default": false,
+        "type": "boolean"
+      }
+    },
+    "required": ["productTotal", "deliveryFees", "border", "splitIncluded"],
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/revise": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "productTotal": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "deliveryFees": {
+        "default": 0,
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      },
+      "border": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "splitIncluded": {
+        "default": false,
+        "type": "boolean"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": [
+      "productTotal",
+      "deliveryFees",
+      "border",
+      "splitIncluded",
+      "reason"
+    ],
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/accept": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "acceptanceEvidence": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "additionalProperties": false
+  },
+  "POST /returns/{id}/reject": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": ["reason"],
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/returns": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": ["reason"],
+    "additionalProperties": false
+  },
+  "POST /returns/{id}/complete": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "inspectionPassed": {
+        "type": "boolean"
+      },
+      "refundConfirmed": {
+        "type": "boolean"
+      },
+      "returnedQuantity": {
+        "default": 0,
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      },
+      "warehouse": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "note": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": [
+      "inspectionPassed",
+      "refundConfirmed",
+      "returnedQuantity",
+      "note"
+    ],
+    "additionalProperties": false
+  },
+  "POST /returns/{id}/card-refunds": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "payment": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "inspectionPassed": {
+        "type": "boolean"
+      }
+    },
+    "required": ["payment", "amount", "inspectionPassed"],
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/checkout": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      }
+    },
+    "required": ["amount"],
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/payments": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "method": {
+        "type": "string",
+        "const": "TT"
+      },
+      "reference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "receiptKey": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      }
+    },
+    "required": ["amount", "method", "reference"],
+    "additionalProperties": false
+  },
+  "POST /payments/{id}/verify": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "bankFundsConfirmed": {
+        "type": "boolean"
+      }
+    },
+    "required": ["bankFundsConfirmed"],
+    "additionalProperties": false
+  },
+  "POST /purchases": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "supplier": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "product": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000
+      },
+      "totalCost": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      }
+    },
+    "required": ["supplier", "product", "quantity", "totalCost"],
+    "additionalProperties": false
+  },
+  "POST /purchases/{id}/receive": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "warehouse": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "batchCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "required": ["warehouse", "batchCode"],
+    "additionalProperties": false
+  },
+  "POST /purchases/{id}/pay": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "reference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "required": ["amount", "reference"],
+    "additionalProperties": false
+  },
+  "POST /stock/transfer": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "batch": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "warehouse": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000
+      }
+    },
+    "required": ["batch", "warehouse", "quantity"],
+    "additionalProperties": false
+  },
+  "POST /records/warehouse": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "country": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "address": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": ["name"],
+    "additionalProperties": false
+  },
+  "PATCH /records/warehouse/{id}": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "country": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "address": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "active": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/shipments": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "quantity": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000
+      },
+      "direct": {
+        "default": false,
+        "type": "boolean"
+      },
+      "sourceBorder": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "warehouse": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      },
+      "driver": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "vehicle": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "additionalFee": {
+        "default": 0,
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      },
+      "feeAccepted": {
+        "default": false,
+        "type": "boolean"
+      },
+      "acceptanceEvidence": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "directCost": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      }
+    },
+    "required": [
+      "quantity",
+      "direct",
+      "driver",
+      "vehicle",
+      "additionalFee",
+      "feeAccepted"
+    ],
+    "additionalProperties": false
+  },
+  "POST /shipments/{id}/handover": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "recipient": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "proof": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "required": ["recipient", "proof"],
+    "additionalProperties": false
+  },
+  "POST /journals": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "memo": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "lines": {
+        "minItems": 2,
+        "maxItems": 100,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "account": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "debitCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000000000
+            },
+            "creditCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000000000
+            }
+          },
+          "required": ["account", "debitCents", "creditCents"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["memo", "lines"],
+    "additionalProperties": false
+  },
+  "POST /journals/{id}/reverse": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /accounting/periods/close": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "month": {
+        "type": "string",
+        "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+      }
+    },
+    "required": ["month"],
+    "additionalProperties": false
+  },
+  "POST /accounting/accounts": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "code": {
+        "type": "string",
+        "pattern": "^\\d{4,6}$"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "type": {
+        "type": "string",
+        "enum": ["asset", "liability", "equity", "income", "expense"]
+      }
+    },
+    "required": ["code", "name", "type"],
+    "additionalProperties": false
+  },
+  "POST /accounting/expenses": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "category": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "memo": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "reference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "order": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
+      }
+    },
+    "required": ["amount", "category", "memo", "reference"],
+    "additionalProperties": false
+  },
+  "POST /accounting/fiscal-close": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "year": {
+        "type": "integer",
+        "minimum": 2000,
+        "maximum": 2100
+      }
+    },
+    "required": ["year"],
+    "additionalProperties": false
+  },
+  "POST /employees/{id}/advance": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      }
+    },
+    "required": ["amount"],
+    "additionalProperties": false
+  },
+  "POST /employees/{id}/salary": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "month": {
+        "type": "string",
+        "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+      },
+      "deduction": {
+        "default": 0,
+        "anyOf": [
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000000
+          },
+          {
+            "type": "number",
+            "const": 0
+          }
+        ]
+      }
+    },
+    "required": ["month", "deduction"],
+    "additionalProperties": false
+  },
+  "POST /records/employee": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "job": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "salary": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      }
+    },
+    "required": ["name", "salary"],
+    "additionalProperties": false
+  },
+  "PATCH /records/employee/{id}": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "job": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "salary": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000
+      },
+      "active": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "POST /documents/{id}/scan": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  }
+}
