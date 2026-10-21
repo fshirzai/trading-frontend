@@ -25,6 +25,10 @@ import OrderDetail from "./modules/sales/OrderDetail.jsx";
 import StatementDetail from "./modules/reconciliation/StatementDetail.jsx";
 import Reports from "./modules/reports/Reports.jsx";
 import Settings from "./modules/auth/AccountSettings.jsx";
+import ProductImages, {
+  ProductGallery,
+  ProductImage,
+} from "./modules/catalog/ProductImages.jsx";
 export default function Workspace({
   api,
   user,
@@ -52,6 +56,7 @@ export default function Workspace({
     [reload, setReload] = useState(0),
     [layout, setLayout] = useState("table"),
     [cardEnabled, setCardEnabled] = useState(false);
+  const [imageProduct, setImageProduct] = useState(null);
   function navigate(key) {
     if (!allowed.some((m) => m.key === key)) return;
     onNavigate(key);
@@ -121,7 +126,20 @@ export default function Workspace({
   const rowActions = (module.rowActions || []).filter((a) =>
     a.roles.includes(user.role),
   );
+  if (
+    module.key === "catalog" &&
+    ["admin", "manager", "procurement"].includes(user.role)
+  )
+    rowActions.push({
+      title: "Manage images",
+      path: "product-images",
+      method: "IMAGES",
+    });
   function action(a, row) {
+    if (a.method === "IMAGES") {
+      setImageProduct(row);
+      return;
+    }
     onCommand({
       ...a,
       id: recordId(row),
@@ -381,10 +399,7 @@ export default function Workspace({
                         <div className="product-grid">
                           {visible.map((p, i) => (
                             <article className="product-card" key={p._id}>
-                              <div className={`product-visual tone-${i % 3}`}>
-                                <Icon name="leaf" size={50} />
-                                <span>{p.category || "Product"}</span>
-                              </div>
+                              <ProductGallery product={p} api={api} />
                               <div className="product-info">
                                 <div className="product-card-top">
                                   <h3>{productName(p, language)}</h3>
@@ -425,6 +440,17 @@ export default function Workspace({
                       </div>
                     ) : (
                       <DataTable
+                        renderCell={(item, key) =>
+                          key === "images" ? (
+                            <ProductImage
+                              className="table-product-image"
+                              product={item}
+                              image={item.images?.[0]}
+                              api={api}
+                              thumbnail
+                            />
+                          ) : undefined
+                        }
                         items={visible}
                         columns={module.columns || []}
                         rowActions={rowActions}
@@ -474,6 +500,23 @@ export default function Workspace({
           </footer>
         </main>
       </div>
+      {imageProduct && (
+        <ProductImages
+          api={api}
+          product={imageProduct}
+          onClose={() => setImageProduct(null)}
+          onUpdated={(product) => {
+            setRows((rows) =>
+              rows.map((row) =>
+                recordId(row) === recordId(product) ? product : row,
+              ),
+            );
+            setDetail((item) =>
+              item && recordId(item) === recordId(product) ? product : item,
+            );
+          }}
+        />
+      )}
       {detail && module.key === "sales" ? (
         <OrderDetail
           api={api}
@@ -498,9 +541,14 @@ export default function Workspace({
             onClose={() => setDetail(null)}
           >
             <div className="form-body">
+              {module.key === "catalog" && (
+                <ProductGallery product={detail} api={api} large />
+              )}
               <dl className="record-details">
                 {Object.entries(detail)
-                  .filter(([k]) => !["__v", "_labels", "lines"].includes(k))
+                  .filter(
+                    ([k]) => !["__v", "_labels", "lines", "images"].includes(k),
+                  )
                   .map(([k, v]) => (
                     <div key={k}>
                       <dt>{t(k === "_id" ? "Record ID" : label(k))}</dt>

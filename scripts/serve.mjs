@@ -87,6 +87,7 @@ export function createFrontendServer({
           "idempotency-key",
           "x-document-name",
           "x-document-kind",
+          "x-product-version",
         ])
           if (req.headers[k]) headers[k] = req.headers[k];
         const transport = target.protocol === "https:" ? https : http;

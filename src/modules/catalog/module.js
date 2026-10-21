@@ -5,6 +5,7 @@ export default {
   roles: ["admin", "manager", "seller", "procurement", "customer"],
   path: "/records/product",
   columns: [
+    "images",
     "name",
     "category",
     "grade",

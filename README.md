@@ -11,7 +11,7 @@ This is the connected application for Trading Backend **2.1**. There are no samp
 
 ```powershell
 npm ci
-Copy-Item .env.example .env.local
+if (!(Test-Path .env.local)) { Copy-Item .env.example .env.local }
 npm run dev
 ```
 
@@ -32,6 +32,17 @@ FRONTEND_URL=http://localhost:3000
 ```
 
 All your other backend settings stay as configured. The development server proxies `/api` before handing pages to Next.js. The built frontend server also proxies `/api` to the same fixed backend origin. No JWT, MongoDB, SMTP or encryption secret belongs in this frontend.
+
+## Repair an earlier Windows installation
+
+The earlier archive included a lockfile contaminated by external Linux dependencies. This archive contains a clean lockfile. Replace your old `package-lock.json` with this one, then run in PowerShell:
+
+```powershell
+Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue
+npm ci
+```
+
+Only continue when installation succeeds. If you cannot download the corrected archive, remove the old `package-lock.json` and run `npm install` to regenerate it on your machine. Do not use `--force` or install Next globally. Preserve any existing `.env.local`; if absent, copy `.env.example` as shown above.
 
 ## Account and initial records
 
@@ -101,3 +112,7 @@ Before Internet deployment, serve the frontend and `/api` on one HTTPS origin be
 The private hosted page is not connected to your Windows machine. It shows connection instructions until a reachable deployed backend is configured; it has no fake data mode.
 
 Security design references: [OWASP session storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html) and [MDN hash-based CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src). Passing tests does not constitute a production penetration test.
+
+## Multiple product images
+
+See PRODUCT_IMAGES_UPDATE.md for the coordinated backend/frontend deployment. Products now have galleries, table thumbnails and image management for admin/manager/procurement. Product images are independent of disabled receipt/document uploads.

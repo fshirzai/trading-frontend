@@ -38,6 +38,11 @@ const { default: Dashboard } =
 const { default: OrderDetail } =
   await import("../src/modules/sales/OrderDetail.jsx");
 const { default: Workspace } = await import("../src/Workspace.jsx");
+const {
+  default: ProductImages,
+  ProductGallery,
+  validateImageFiles,
+} = await import("../src/modules/catalog/ProductImages.jsx");
 afterEach(() => {
   cleanup();
   localStorage.clear();
@@ -45,6 +50,143 @@ afterEach(() => {
 });
 const mount = (node) => render(<Preferences>{node}</Preferences>);
 const id = "012345678901234567890123";
+test("product gallery switches between actual image URLs and opens a full gallery", async () => {
+  const p = {
+    _id: id,
+    name: { en: "Beans" },
+    active: true,
+    images: [
+      { id: "a".repeat(24), width: 80, height: 60 },
+      { id: "b".repeat(24), width: 80, height: 60 },
+    ],
+  };
+  const view = mount(<ProductGallery product={p} />);
+  fireEvent.click(screen.getByRole("button", { name: "Show image 2" }));
+  assert.ok(
+    view.container
+      .querySelector(".product-gallery-main img")
+      .src.includes("b".repeat(24)),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "View images: Beans" }));
+  assert.ok(screen.getByRole("dialog"));
+  assert.ok(
+    view.container
+      .querySelector(".dialog .product-gallery-main img")
+      .src.endsWith("b".repeat(24)),
+  );
+});
+test("product image manager uploads multiple files sequentially then changes cover, replaces and removes", async () => {
+  const originalCreate = URL.createObjectURL,
+    originalRevoke = URL.revokeObjectURL,
+    originalConfirm = window.confirm;
+  URL.createObjectURL = () => "blob:fixture";
+  URL.revokeObjectURL = () => {};
+  window.confirm = () => true;
+  let current = {
+    _id: id,
+    __v: 0,
+    active: true,
+    name: { en: "Beans" },
+    images: [{ id: "1".repeat(24), width: 80, height: 60, size: 200 }],
+  };
+  const calls = [],
+    updates = [];
+  const api = {
+    request: async (path, options = {}) => {
+      calls.push({ path, options });
+      if (!options.method) return { product: current };
+      const next = {
+        ...current,
+        __v: current.__v + 1,
+        images: [...current.images],
+      };
+      if (options.method === "PATCH")
+        next.images = options.body.imageIds.map((key) =>
+          next.images.find((entry) => entry.id === key),
+        );
+      else if (path.endsWith("/remove"))
+        next.images = next.images.filter(
+          (entry) => !path.includes(`/${entry.id}/remove`),
+        );
+      else {
+        assert.equal(options.raw, true);
+        assert.equal(options.headers["X-Product-Version"], String(current.__v));
+        const entry = {
+          id: String(next.__v + 1).repeat(24),
+          width: 80,
+          height: 60,
+          size: 200,
+        };
+        if (path.endsWith("/replace"))
+          next.images[
+            next.images.findIndex((entry) =>
+              path.includes(`/${entry.id}/replace`),
+            )
+          ] = entry;
+        else next.images.push(entry);
+      }
+      current = next;
+      return { product: next };
+    },
+  };
+  try {
+    mount(
+      <ProductImages
+        api={api}
+        product={current}
+        onUpdated={(p) => updates.push(p)}
+        onClose={() => {}}
+      />,
+    );
+    await waitFor(() =>
+      assert.ok(screen.getByLabelText("Choose product images")),
+    );
+    const files = [
+      new window.File(["one"], "one.png", { type: "image/png" }),
+      new window.File(["two"], "two.jpg", { type: "image/jpeg" }),
+    ];
+    fireEvent.change(screen.getByLabelText("Choose product images"), {
+      target: { files },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Upload selected (2)" }),
+    );
+    await waitFor(() => assert.equal(updates.length, 2));
+    assert.equal(current.images.length, 3);
+    assert.equal(calls.filter((call) => call.options.raw).length, 2);
+    const newCover = current.images[1].id;
+    fireEvent.click(screen.getAllByRole("button", { name: "Make cover" })[0]);
+    await waitFor(() => assert.equal(current.images[0].id, newCover));
+    await waitFor(() =>
+      assert.equal(screen.getByLabelText("Replace image 1").disabled, false),
+    );
+    fireEvent.change(screen.getByLabelText("Replace image 1"), {
+      target: { files: [files[0]] },
+    });
+    await waitFor(() => assert.notEqual(current.images[0].id, newCover));
+    await waitFor(() =>
+      assert.equal(
+        screen.getAllByRole("button", { name: "Remove" })[0].disabled,
+        false,
+      ),
+    );
+    fireEvent.click(screen.getAllByRole("button", { name: "Remove" })[0]);
+    await waitFor(() => assert.equal(current.images.length, 2));
+  } finally {
+    URL.createObjectURL = originalCreate;
+    URL.revokeObjectURL = originalRevoke;
+    window.confirm = originalConfirm;
+  }
+});
+test("product file selection rejects oversized, unsupported and excessive images", () => {
+  assert.throws(() =>
+    validateImageFiles([{ type: "image/svg+xml", size: 100 }]),
+  );
+  assert.throws(() =>
+    validateImageFiles([{ type: "image/png", size: 3 * 1024 * 1024 + 1 }]),
+  );
+  assert.throws(() => validateImageFiles([{ type: "image/png", size: 20 }], 0));
+});
 test("all color palettes support persisted dark mode and RTL language", async () => {
   mount(<PreferencesControls />);
   fireEvent.change(screen.getByLabelText("Appearance mode"), {

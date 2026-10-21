@@ -83,6 +83,60 @@ test("frontend API client trades against the real seeded backend over HTTP", asy
     assert.equal((await customer.request("/health/ready")).status, "ready");
     assert.equal((await customer.restore()).role, "customer");
     assert.ok((await customer.request("/catalog")).items.length > 0);
+    const sharp = require("sharp");
+    const imageBytes = await sharp({
+      create: { width: 64, height: 48, channels: 3, background: "#08745c" },
+    })
+      .png()
+      .toBuffer();
+    let productVersion = (
+      await admin.request(`/products/${ids.product}/images`)
+    ).product.__v;
+    const imageUpload = () =>
+      admin.request(`/products/${ids.product}/images`, {
+        method: "POST",
+        raw: true,
+        body: imageBytes,
+        headers: {
+          "Content-Type": "image/png",
+          "X-Product-Version": String(productVersion),
+        },
+      });
+    let productResponse = await imageUpload();
+    productVersion = productResponse.product.__v;
+    productResponse = await imageUpload();
+    const productImages = productResponse.product.images;
+    assert.equal(productImages.length, 2);
+    const publicThumb = await fetch(
+      `${base}/catalog/${ids.product}/images/${productImages[0].id}/thumb`,
+    );
+    assert.equal(publicThumb.status, 200);
+    assert.match(publicThumb.headers.get("content-type"), /image\/webp/);
+    assert.equal(
+      (await sharp(Buffer.from(await publicThumb.arrayBuffer())).metadata())
+        .format,
+      "webp",
+    );
+    productResponse = await admin.request(`/products/${ids.product}/images`, {
+      method: "PATCH",
+      body: {
+        version: productResponse.product.__v,
+        imageIds: productImages.map((image) => image.id).reverse(),
+      },
+    });
+    assert.equal(productResponse.product.images[0].id, productImages[1].id);
+    await assert.rejects(
+      customer.request(`/products/${ids.product}/images`, {
+        method: "POST",
+        raw: true,
+        body: imageBytes,
+        headers: {
+          "Content-Type": "image/png",
+          "X-Product-Version": String(productResponse.product.__v),
+        },
+      }),
+      (error) => error.status === 403,
+    );
     await assert.rejects(
       customer.request("/records/journal"),
       (e) => e.status === 403,

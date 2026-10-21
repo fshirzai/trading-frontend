@@ -42,6 +42,7 @@ export default function DataTable({
   onView,
   loading = false,
   actionFilter = () => true,
+  renderCell,
 }) {
   const { t, language } = usePreferences();
   if (loading)
@@ -81,19 +82,24 @@ export default function DataTable({
                   key={key}
                   title={typeof item[key] === "string" ? item[key] : undefined}
                 >
-                  {key === "status" || key === "active" ? (
-                    <Badge>
-                      {key === "active"
-                        ? item.active
-                          ? "Active"
-                          : "Inactive"
-                        : item.status}
-                    </Badge>
-                  ) : (
-                    <span>
-                      {display(item._labels?.[key] ?? item[key], key, language)}
-                    </span>
-                  )}
+                  {renderCell?.(item, key) ??
+                    (key === "status" || key === "active" ? (
+                      <Badge>
+                        {key === "active"
+                          ? item.active
+                            ? "Active"
+                            : "Inactive"
+                          : item.status}
+                      </Badge>
+                    ) : (
+                      <span>
+                        {display(
+                          item._labels?.[key] ?? item[key],
+                          key,
+                          language,
+                        )}
+                      </span>
+                    ))}
                 </td>
               ))}
               {(onView || rowActions.length > 0) && (

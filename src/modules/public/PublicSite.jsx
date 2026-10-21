@@ -9,6 +9,7 @@ import {
   PreferencesControls,
 } from "../../shared/ui.jsx";
 import Icon from "../../shared/icons.jsx";
+import { ProductGallery } from "../catalog/ProductImages.jsx";
 import { productName, recordId } from "../../shared/format.js";
 import { usePreferences } from "../../shared/i18n.jsx";
 export default function PublicSite({ api, onNavigate, user, onInquiry }) {
@@ -223,10 +224,7 @@ export default function PublicSite({ api, onNavigate, user, onInquiry }) {
               <div className="product-grid">
                 {visible.map((p, i) => (
                   <article className="product-card" key={recordId(p)}>
-                    <div className={`product-visual tone-${i % 3}`}>
-                      <Icon name="leaf" size={64} />
-                      <span>{p.category || "AGRICULTURAL PRODUCT"}</span>
-                    </div>
+                    <ProductGallery product={p} />
                     <div className="product-info">
                       <div>
                         <span className="eyebrow">
