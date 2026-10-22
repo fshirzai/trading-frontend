@@ -42,6 +42,51 @@ export default function Dashboard({
     return { date: key, ...data?.daily.find((x) => x._id === key) };
   });
   const max = Math.max(1, ...daily.map((x) => x.valueCents || 0));
+  if (user.role === "procurement")
+    return (
+      <>
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">PROCUREMENT WORKSPACE</span>
+            <h1>Welcome back, {user.name?.split(" ")[0]}</h1>
+            <p>
+              Review shortages, purchase stock and receive it into the right
+              warehouse.
+            </p>
+          </div>
+        </div>
+        <ErrorBox error={error} />
+        <div className="metric-grid">
+          {[
+            [
+              "Open procurement requests",
+              data?.procurement?.requests,
+              "procurementRequests",
+            ],
+            [
+              "Purchases awaiting receipt",
+              data?.procurement?.purchases,
+              "procurement",
+            ],
+            ["Active warehouses", data?.procurement?.warehouses, "warehouses"],
+          ].map(([title, value, key]) => (
+            <article className="metric" key={key}>
+              <span>{title}</span>
+              <strong>{value ?? "..."}</strong>
+              <Button onClick={() => onNavigate(key)}>Open</Button>
+            </article>
+          ))}
+        </div>
+        <div className="button-row">
+          <Button onClick={() => onNavigate("inventory")}>
+            Warehouse stock
+          </Button>
+          <Button onClick={() => onNavigate("catalog")}>
+            Products and media
+          </Button>
+        </div>
+      </>
+    );
   return (
     <>
       <div className="page-heading">

@@ -1,4 +1,5 @@
 "use client";
+import ReceiptUpload from "./ReceiptUpload.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox, Badge } from "../../shared/ui.jsx";
 import Icon from "../../shared/icons.jsx";
@@ -14,7 +15,14 @@ export async function download(api, path, name) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export default function OrderDocuments({ api, id, user, onCommand, refresh }) {
+export default function OrderDocuments({
+  api,
+  id,
+  user,
+  onCommand,
+  refresh,
+  invoices = [],
+}) {
   const [items, setItems] = useState([]),
     [cursor, setCursor] = useState(""),
     [next, setNext] = useState(null),
@@ -87,6 +95,36 @@ export default function OrderDocuments({ api, id, user, onCommand, refresh }) {
   return (
     <section className="detail-section">
       <h3>Trade documents</h3>
+      {user.role !== "customer" && (
+        <Button
+          className="secondary"
+          onClick={() =>
+            onCommand({
+              title: "Issue invoice",
+              path: "/orders/{id}/invoices",
+              method: "POST",
+              id,
+            })
+          }
+        >
+          Issue invoice
+        </Button>
+      )}
+      {invoices.map((i) => (
+        <div className="document-row" key={i._id}>
+          <b>{i.number}</b>
+          <Button
+            className="secondary small"
+            onClick={() =>
+              run(() =>
+                download(api, `/invoices/${i._id}/pdf`, `${i.number}.pdf`),
+              )
+            }
+          >
+            Download issued invoice
+          </Button>
+        </div>
+      ))}
       <div className="button-row">
         {["proforma", "invoice", "packing-list"].map((kind) => (
           <Button
@@ -125,7 +163,15 @@ export default function OrderDocuments({ api, id, user, onCommand, refresh }) {
               className="secondary small"
               disabled={busy || doc.status !== "Clean"}
               onClick={() =>
-                run(() => download(api, `/documents/${doc._id}`, doc.name))
+                run(() =>
+                  download(
+                    api,
+                    doc.normalized
+                      ? `/receipts/${doc._id}`
+                      : `/documents/${doc._id}`,
+                    doc.name,
+                  ),
+                )
               }
             >
               Download
@@ -170,29 +216,44 @@ export default function OrderDocuments({ api, id, user, onCommand, refresh }) {
           </Button>
         )}
       </div>
-      <form onSubmit={upload} className="upload-form">
-        <label>
-          Document kind
-          <select name="kind">
-            <option value="payment-receipt">Payment receipt</option>
-            {user.role !== "customer" && (
-              <option value="trade-document">Trade document</option>
-            )}
-          </select>
-        </label>
-        <label>
-          PDF, PNG or JPEG · max 5 MiB
-          <input
-            name="file"
-            type="file"
-            required
-            accept="application/pdf,image/png,image/jpeg"
-          />
-        </label>
-        <Button icon="plus" disabled={busy} type="submit">
-          Upload
-        </Button>
-      </form>
+      <ReceiptUpload
+        api={api}
+        id={id}
+        onUploaded={() => {
+          setReload((n) => n + 1);
+          setMessage(
+            "Receipt uploaded. Select it when recording your TT payment.",
+          );
+        }}
+      />
+      <details>
+        <summary>
+          Additional scanned documents (requires enabled document storage)
+        </summary>
+        <form onSubmit={upload} className="upload-form">
+          <label>
+            Document kind
+            <select name="kind">
+              <option value="payment-receipt">Payment receipt</option>
+              {user.role !== "customer" && (
+                <option value="trade-document">Trade document</option>
+              )}
+            </select>
+          </label>
+          <label>
+            PDF, PNG or JPEG · max 5 MiB
+            <input
+              name="file"
+              type="file"
+              required
+              accept="application/pdf,image/png,image/jpeg"
+            />
+          </label>
+          <Button icon="plus" disabled={busy} type="submit">
+            Upload
+          </Button>
+        </form>
+      </details>
       {message && (
         <p className="success-note" role="status">
           {message}

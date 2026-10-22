@@ -88,6 +88,8 @@ export function createFrontendServer({
           "x-document-name",
           "x-document-kind",
           "x-product-version",
+          "x-video-chunk",
+          "range",
         ])
           if (req.headers[k]) headers[k] = req.headers[k];
         const transport = target.protocol === "https:" ? https : http;
@@ -98,6 +100,9 @@ export function createFrontendServer({
             res.statusCode = reply.statusCode;
             for (const key of [
               "content-type",
+              "content-length",
+              "content-range",
+              "accept-ranges",
               "set-cookie",
               "content-disposition",
               "x-request-id",

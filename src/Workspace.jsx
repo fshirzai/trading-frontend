@@ -1,4 +1,6 @@
 "use client";
+import ProductVideo from "./modules/catalog/ProductVideo.jsx";
+import ProductStock from "./modules/inventory/ProductStock.jsx";
 import { useEffect, useState } from "react";
 import { allowedModules } from "./modules/registry.js";
 import {
@@ -50,6 +52,9 @@ export default function Workspace({
     [history, setHistory] = useState([]),
     [next, setNext] = useState(null),
     [search, setSearch] = useState(""),
+    [warehouse, setWarehouse] = useState(""),
+    [warehouseChoices, setWarehouseChoices] = useState([]),
+    [querySearch, setQuerySearch] = useState(""),
     [status, setStatus] = useState("All statuses"),
     [detail, setDetail] = useState(null),
     [pendingDetail, setPendingDetail] = useState(null),
@@ -57,6 +62,35 @@ export default function Workspace({
     [layout, setLayout] = useState("table"),
     [cardEnabled, setCardEnabled] = useState(false);
   const [imageProduct, setImageProduct] = useState(null);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setCursor("");
+      setHistory([]);
+      setQuerySearch(search);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+  useEffect(() => {
+    setCursor("");
+    setHistory([]);
+  }, [status, warehouse]);
+  useEffect(() => {
+    if (user.role !== "customer")
+      api
+        .request("/records/warehouse?limit=100")
+        .then((r) => setWarehouseChoices(r.items))
+        .catch(() => {});
+  }, [api, user.role]);
+  useEffect(() => {
+    function openLinkedOrder() {
+      const parts = window.location.hash.split("/");
+      if (active === "sales" && /^[a-f\d]{24}$/.test(parts[2] || ""))
+        setDetail({ _id: parts[2] });
+    }
+    openLinkedOrder();
+    window.addEventListener("hashchange", openLinkedOrder);
+    return () => window.removeEventListener("hashchange", openLinkedOrder);
+  }, [active]);
   function navigate(key) {
     if (!allowed.some((m) => m.key === key)) return;
     onNavigate(key);
@@ -67,7 +101,13 @@ export default function Workspace({
     setHistory([]);
     setSearch("");
     setStatus("All statuses");
-    setDetail(active === "sales" && pendingDetail ? pendingDetail : null);
+    const linked = window.location.hash.split("/")[2];
+    setDetail(
+      active === "sales"
+        ? pendingDetail ||
+            (/^[a-f\d]{24}$/.test(linked || "") ? { _id: linked } : null)
+        : null,
+    );
     if (active === "sales") setPendingDetail(null);
   }, [active]);
   useEffect(() => {
@@ -95,7 +135,16 @@ export default function Workspace({
     setError(null);
     api
       .request(
-        module.path + "?limit=25" + (cursor ? "&cursor=" + cursor : ""),
+        module.path +
+          "?limit=25" +
+          (cursor ? "&cursor=" + cursor : "") +
+          (querySearch ? "&search=" + encodeURIComponent(querySearch) : "") +
+          (status !== "All statuses"
+            ? "&status=" + encodeURIComponent(status)
+            : "") +
+          (module.key === "inventory" && warehouse
+            ? "&warehouse=" + warehouse
+            : ""),
         { signal: controller.signal },
       )
       .then((r) => {
@@ -114,7 +163,16 @@ export default function Workspace({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [api, module.path, cursor, refresh, reload]);
+  }, [
+    api,
+    module.path,
+    cursor,
+    refresh,
+    reload,
+    querySearch,
+    status,
+    warehouse,
+  ]);
   const visible = rows.filter(
     (r) =>
       (status === "All statuses" || r.status === status) &&
@@ -136,6 +194,18 @@ export default function Workspace({
       method: "IMAGES",
     });
   function action(a, row) {
+    if (a.fromRequest) {
+      onCommand({
+        ...a,
+        initial: {
+          request: recordId(row),
+          product: row.product,
+          quantity: row.quantity - row.receivedQuantity,
+        },
+        context: row,
+      });
+      return;
+    }
     if (a.method === "IMAGES") {
       setImageProduct(row);
       return;
@@ -156,6 +226,14 @@ export default function Workspace({
     });
   }
   function view(item) {
+    if (
+      module.key === "notifications" &&
+      typeof item.href === "string" &&
+      /^\/#workspace\/[A-Za-z]+(?:\/[a-f\d]{24})?$/.test(item.href)
+    ) {
+      window.location.hash = item.href.slice(2);
+      return;
+    }
     setDetail(item);
   }
   const navGroups = [
@@ -168,6 +246,7 @@ export default function Workspace({
         "inventory",
         "warehouses",
         "procurement",
+        "procurementRequests",
         "logistics",
         "payments",
         "returns",
@@ -188,7 +267,7 @@ export default function Workspace({
     [
       "administration",
       "ADMINISTRATION",
-      ["audit", "notifications", "users", "auth"],
+      ["audit", "notifications", "notificationDelivery", "users", "auth"],
     ],
   ];
   return (
@@ -333,7 +412,7 @@ export default function Workspace({
                         <Icon name="search" />
                         <input
                           aria-label={t("Search")}
-                          placeholder={t("Search this page")}
+                          placeholder={t("Search records")}
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
                         />
@@ -441,7 +520,19 @@ export default function Workspace({
                     ) : (
                       <DataTable
                         renderCell={(item, key) =>
-                          key === "images" ? (
+                          key === "locations" ? (
+                            <div className="button-row">
+                              {item.locations?.map((l) => (
+                                <Button
+                                  key={l.warehouse}
+                                  className="subtle small"
+                                  onClick={() => setWarehouse(l.warehouse)}
+                                >
+                                  {l.name}: {l.quantity}
+                                </Button>
+                              ))}
+                            </div>
+                          ) : key === "images" ? (
                             <ProductImage
                               className="table-product-image"
                               product={item}
@@ -461,6 +552,23 @@ export default function Workspace({
                         onView={view}
                         loading={loading}
                       />
+                    )}
+                    {module.key === "inventory" && (
+                      <label>
+                        Warehouse
+                        <select
+                          aria-label="Warehouse filter"
+                          value={warehouse}
+                          onChange={(e) => setWarehouse(e.target.value)}
+                        >
+                          <option value="">All warehouses</option>
+                          {warehouseChoices.map((w) => (
+                            <option key={w._id} value={w._id}>
+                              {w.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     )}
                     <div className="pagination">
                       <span>
@@ -542,7 +650,23 @@ export default function Workspace({
           >
             <div className="form-body">
               {module.key === "catalog" && (
-                <ProductGallery product={detail} api={api} large />
+                <>
+                  <ProductGallery product={detail} api={api} large />
+                  <ProductVideo
+                    product={detail}
+                    api={api}
+                    editable={["admin", "manager", "procurement"].includes(
+                      user.role,
+                    )}
+                    onUpdated={(p) => {
+                      setDetail(p);
+                      setReload((n) => n + 1);
+                    }}
+                  />
+                  {user.role !== "customer" && (
+                    <ProductStock api={api} id={recordId(detail)} />
+                  )}
+                </>
               )}
               <dl className="record-details">
                 {Object.entries(detail)

@@ -66,7 +66,9 @@ function App({ initialView = "home" }) {
         if (live) {
           setUser(u);
           if (initialView === "home") {
-            const key = window.location.hash.replace("#workspace/", "");
+            const key = window.location.hash
+              .replace("#workspace/", "")
+              .split("/")[0];
             setActive(
               allowedModules(u.role).some((m) => m.key === key)
                 ? key
@@ -218,7 +220,16 @@ function App({ initialView = "home" }) {
           onNavigate={navigate}
           onLogin={(u) => {
             setUser(u);
-            navigate("workspace");
+            const target = window.location.hash.match(
+              /^#workspace\/([^/]+)(?:\/([a-f\d]{24}))?$/,
+            );
+            const module =
+              target && allowedModules(u.role).some((m) => m.key === target[1])
+                ? target[1]
+                : "dashboard";
+            navigate("workspace", module);
+            if (target?.[2] && module === "sales")
+              window.location.hash = `workspace/sales/${target[2]}`;
           }}
         />
       )}

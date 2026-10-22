@@ -89,8 +89,15 @@ export function createApi({
       );
     }
     if (res.status === 204) return null;
-    if(blob)return res.blob();
-    try{return await res.json()}catch{throw new ApiError("Backend returned an unexpected response. Check the API connection.",502)}
+    if (blob) return res.blob();
+    try {
+      return await res.json();
+    } catch {
+      throw new ApiError(
+        "Backend returned an unexpected response. Check the API connection.",
+        502,
+      );
+    }
   }
   async function refresh() {
     if (!refreshTask) {

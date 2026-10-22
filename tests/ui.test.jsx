@@ -385,7 +385,7 @@ test("order document tab lists files by name and disables quarantined downloads"
       onCommand={() => {}}
     />,
   );
-  await screen.findByText("Beans");
+  await screen.findAllByText("Beans");
   fireEvent.click(screen.getByRole("button", { name: "Documents" }));
   await screen.findByText("bank-receipt.pdf");
   assert.equal(screen.getByRole("button", { name: "Download" }).disabled, true);

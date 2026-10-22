@@ -1,0 +1,14 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> trading-company-frontend@2.2.0 test:integration
+> node --test tests/backend.integration.js
+
+✔ frontend API client trades against the real seeded backend over HTTP (1838.410817ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2507.03351

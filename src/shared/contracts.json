@@ -1,12 +1,10 @@
 {
   "POST /notifications/{id}/read": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {},
     "additionalProperties": false
   },
   "POST /reconciliation/statements": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -38,7 +36,6 @@
     "additionalProperties": false
   },
   "POST /reconciliation/lines/{id}/match": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "journal": {
@@ -50,13 +47,11 @@
     "additionalProperties": false
   },
   "POST /reconciliation/statements/{id}/close": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {},
     "additionalProperties": false
   },
   "POST /auth/verify-email": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "token": {
@@ -68,7 +63,6 @@
     "additionalProperties": false
   },
   "POST /auth/resend-verification": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "email": {
@@ -82,7 +76,6 @@
     "additionalProperties": false
   },
   "POST /auth/forgot-password": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "email": {
@@ -96,7 +89,6 @@
     "additionalProperties": false
   },
   "POST /auth/reset-password": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "token": {
@@ -113,7 +105,6 @@
     "additionalProperties": false
   },
   "POST /auth/mfa/enroll": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "password": {
@@ -126,7 +117,6 @@
     "additionalProperties": false
   },
   "POST /auth/mfa/confirm": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "code": {
@@ -138,7 +128,6 @@
     "additionalProperties": false
   },
   "POST /auth/mfa/disable": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "password": {
@@ -156,7 +145,6 @@
     "additionalProperties": false
   },
   "POST /auth/register": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -185,7 +173,6 @@
     "additionalProperties": false
   },
   "POST /auth/login": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "email": {
@@ -208,25 +195,21 @@
     "additionalProperties": false
   },
   "POST /auth/refresh": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {},
     "additionalProperties": false
   },
   "POST /auth/logout": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {},
     "additionalProperties": false
   },
   "POST /auth/logout-all": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {},
     "additionalProperties": false
   },
   "POST /users": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -254,7 +237,6 @@
     "additionalProperties": false
   },
   "PATCH /users/{id}": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "active": {
@@ -268,7 +250,6 @@
     "additionalProperties": false
   },
   "POST /auth/change-password": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "oldPassword": {
@@ -291,7 +272,6 @@
     "additionalProperties": false
   },
   "POST /records/product": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -315,6 +295,15 @@
         },
         "required": ["en"],
         "additionalProperties": false
+      },
+      "sku": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "unit": {
+        "type": "string",
+        "enum": ["tonne", "kg", "piece", "box", "bag"]
       },
       "category": {
         "type": "string",
@@ -355,7 +344,6 @@
     "additionalProperties": false
   },
   "PATCH /records/product/{id}": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -379,6 +367,15 @@
         },
         "required": ["en"],
         "additionalProperties": false
+      },
+      "sku": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "unit": {
+        "type": "string",
+        "enum": ["tonne", "kg", "piece", "box", "bag"]
       },
       "category": {
         "type": "string",
@@ -420,7 +417,6 @@
     "additionalProperties": false
   },
   "POST /records/party": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -458,7 +454,6 @@
     "additionalProperties": false
   },
   "POST /inquiries": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "customer": {
@@ -489,9 +484,34 @@
     "additionalProperties": false
   },
   "POST /inquiries/{id}/proforma": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
+      "items": {
+        "minItems": 1,
+        "maxItems": 30,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "product": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "quantity": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            },
+            "productTotal": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000000
+            }
+          },
+          "required": ["product", "quantity", "productTotal"],
+          "additionalProperties": false
+        }
+      },
       "productTotal": {
         "type": "number",
         "exclusiveMinimum": 0,
@@ -525,9 +545,34 @@
     "additionalProperties": false
   },
   "POST /orders/{id}/revise": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
+      "items": {
+        "minItems": 1,
+        "maxItems": 30,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "product": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "quantity": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            },
+            "productTotal": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000000
+            }
+          },
+          "required": ["product", "quantity", "productTotal"],
+          "additionalProperties": false
+        }
+      },
       "productTotal": {
         "type": "number",
         "exclusiveMinimum": 0,
@@ -572,7 +617,6 @@
     "additionalProperties": false
   },
   "POST /orders/{id}/accept": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "acceptanceEvidence": {
@@ -584,7 +628,6 @@
     "additionalProperties": false
   },
   "POST /returns/{id}/reject": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "reason": {
@@ -597,7 +640,6 @@
     "additionalProperties": false
   },
   "POST /orders/{id}/returns": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "reason": {
@@ -610,7 +652,6 @@
     "additionalProperties": false
   },
   "POST /returns/{id}/complete": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "inspectionPassed": {
@@ -641,6 +682,11 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 2000
+      },
+      "refundReference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
       }
     },
     "required": [
@@ -652,7 +698,6 @@
     "additionalProperties": false
   },
   "POST /returns/{id}/card-refunds": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "payment": {
@@ -672,7 +717,6 @@
     "additionalProperties": false
   },
   "POST /orders/{id}/checkout": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "amount": {
@@ -685,7 +729,6 @@
     "additionalProperties": false
   },
   "POST /orders/{id}/payments": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "amount": {
@@ -711,7 +754,6 @@
     "additionalProperties": false
   },
   "POST /payments/{id}/verify": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "bankFundsConfirmed": {
@@ -722,7 +764,6 @@
     "additionalProperties": false
   },
   "POST /purchases": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "supplier": {
@@ -742,13 +783,16 @@
         "type": "number",
         "exclusiveMinimum": 0,
         "maximum": 1000000000
+      },
+      "request": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$"
       }
     },
     "required": ["supplier", "product", "quantity", "totalCost"],
     "additionalProperties": false
   },
   "POST /purchases/{id}/receive": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "warehouse": {
@@ -759,13 +803,17 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 200
+      },
+      "location": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
       }
     },
     "required": ["warehouse", "batchCode"],
     "additionalProperties": false
   },
   "POST /purchases/{id}/pay": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "amount": {
@@ -783,7 +831,6 @@
     "additionalProperties": false
   },
   "POST /stock/transfer": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "batch": {
@@ -804,7 +851,6 @@
     "additionalProperties": false
   },
   "POST /records/warehouse": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -827,7 +873,6 @@
     "additionalProperties": false
   },
   "PATCH /records/warehouse/{id}": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -852,9 +897,12 @@
     "additionalProperties": false
   },
   "POST /orders/{id}/shipments": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
+      "item": {
+        "type": "string",
+        "maxLength": 30
+      },
       "quantity": {
         "type": "number",
         "exclusiveMinimum": 0,
@@ -928,7 +976,6 @@
     "additionalProperties": false
   },
   "POST /shipments/{id}/handover": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "recipient": {
@@ -946,7 +993,6 @@
     "additionalProperties": false
   },
   "POST /journals": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "memo": {
@@ -986,13 +1032,11 @@
     "additionalProperties": false
   },
   "POST /journals/{id}/reverse": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {},
     "additionalProperties": false
   },
   "POST /accounting/periods/close": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "month": {
@@ -1004,7 +1048,6 @@
     "additionalProperties": false
   },
   "POST /accounting/accounts": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "code": {
@@ -1025,7 +1068,6 @@
     "additionalProperties": false
   },
   "POST /accounting/expenses": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "amount": {
@@ -1057,7 +1099,6 @@
     "additionalProperties": false
   },
   "POST /accounting/fiscal-close": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "year": {
@@ -1070,7 +1111,6 @@
     "additionalProperties": false
   },
   "POST /employees/{id}/advance": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "amount": {
@@ -1083,7 +1123,6 @@
     "additionalProperties": false
   },
   "POST /employees/{id}/salary": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "month": {
@@ -1109,7 +1148,6 @@
     "additionalProperties": false
   },
   "POST /records/employee": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -1132,7 +1170,6 @@
     "additionalProperties": false
   },
   "PATCH /records/employee/{id}": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
       "name": {
@@ -1157,7 +1194,36 @@
     "additionalProperties": false
   },
   "POST /documents/{id}/scan": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/reserve": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/procurement-requests": {
+    "type": "object",
+    "properties": {
+      "item": {
+        "type": "string",
+        "maxLength": 30
+      },
+      "note": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "additionalProperties": false
+  },
+  "POST /notification-delivery/{id}/retry": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "POST /orders/{id}/invoices": {
     "type": "object",
     "properties": {},
     "additionalProperties": false

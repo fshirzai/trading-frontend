@@ -1,0 +1,14 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> trading-company-frontend@2.2.0 test:dev
+> node --test tests/dev.system.js
+
+✔ npm development entry starts Next pages and forwards the same-origin API without untrusted proxy headers (9825.34741ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9922.58958

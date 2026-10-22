@@ -1,0 +1,35 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> trading-company-frontend@2.2.0 test
+> node --test tests/*.test.js
+
+✔ financial requests preserve body and retry key and include credentials (4.905455ms)
+✔ parallel expired requests perform one refresh and retain original idempotency keys (17.089916ms)
+✔ concurrent session restoration rotates refresh cookie once (10.776872ms)
+✔ failed refresh clears access and notifies the session owner (1.260137ms)
+✔ backend validation errors keep request references (0.374166ms)
+✔ network failure does not automatically repeat a write (0.189056ms)
+✔ checkout redirect accepts only HTTPS Stripe checkout (0.19778ms)
+✔ clearing a session while restoration is pending cannot restore the old token (0.413786ms)
+✔ every configured action has an exact backend schema (1.125524ms)
+✔ customer and procurement navigation excludes financial administration (0.277009ms)
+✔ schema serialization converts zeroAmount unions into numbers (1.128298ms)
+✔ journal lines serialize cents and ignore extra properties (0.236918ms)
+✔ missing mandatory fields fail before making API calls (0.546567ms)
+✔ USD formatting retains integer-cent precision (14.173523ms)
+✔ lockfile supports clean installs without external or required platform packages (5.123054ms)
+✔ static frontend applies hash CSP and blocks host/origin abuse (52.132062ms)
+✔ invalid backend configuration cannot turn the proxy into an arbitrary URL forwarder (0.490362ms)
+✔ role and record state gate trading actions (1.071752ms)
+✔ disabled card adapter is never advertised as usable checkout (0.13856ms)
+✔ return estimate retains 25% of total and uses the first split handover deadline (0.949507ms)
+✔ themes validate persisted values and follow system appearance (0.201365ms)
+✔ CSV exports escape spreadsheet formulas and retain numeric negative amounts (1.107927ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 157.799321

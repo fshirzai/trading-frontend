@@ -1,4 +1,5 @@
 "use client";
+import ReceiptUpload from "../documents/ReceiptUpload.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox, Modal, Badge } from "../../shared/ui.jsx";
 import DataTable from "../../shared/DataTable.jsx";
@@ -25,7 +26,8 @@ export default function OrderDetail({
   const [data, setData] = useState(null),
     [error, setError] = useState(null),
     [methods, setMethods] = useState([]),
-    [tab, setTab] = useState("overview");
+    [tab, setTab] = useState("overview"),
+    [reload, setReload] = useState(0);
   useEffect(() => {
     let live = true;
     setError(null);
@@ -42,7 +44,7 @@ export default function OrderDetail({
     return () => {
       live = false;
     };
-  }, [api, id, refresh]);
+  }, [api, id, refresh, reload]);
   const o = data?.order,
     cardEnabled = methods.some((m) => m.method === "VISA" && m.enabled);
   const actions = o
@@ -56,17 +58,36 @@ export default function OrderDetail({
     onCommand({
       ...a,
       id: r._id,
-      context: r,
+      context: a.path.endsWith("/shipments") ? { ...r, items: o.items } : r,
       initial: a.path.endsWith("/shipments")
         ? {
+            item: o.items?.[0]?._id,
             quantity: Math.max(
               0,
-              o.quantity - data.shipments.reduce((n, s) => n + s.quantity, 0),
+              (o.items?.[0]?.quantity || o.quantity) -
+                data.shipments
+                  .filter((s) => !o.items?.length || s.item === o.items[0]._id)
+                  .reduce((n, s) => n + s.quantity, 0),
             ),
           }
         : a.path.endsWith("/payments") || a.path.endsWith("/checkout")
-          ? { amount: Math.max(0, (o.totalCents - o.paidCents) / 100) }
-          : undefined,
+          ? {
+              ...a.initial,
+              amount: Math.max(0, (o.totalCents - o.paidCents) / 100),
+            }
+          : a.path.endsWith("/revise")
+            ? {
+                productTotal: o.productCents / 100,
+                deliveryFees: o.feesCents / 100,
+                border: o.border,
+                splitIncluded: o.splitIncluded,
+                items: o.items?.map((i) => ({
+                  product: i.product,
+                  quantity: i.quantity,
+                  productTotal: i.productCents / 100,
+                })),
+              }
+            : undefined,
     });
   }
   return (
@@ -82,8 +103,10 @@ export default function OrderDetail({
                 </span>
                 <h2>{productName(o, language)}</h2>
                 <p>
-                  {o.quantity} tonnes · Quotation v{o.version} ·{" "}
-                  {date(o.createdAt)}
+                  {o.items?.length > 1
+                    ? `${o.items.length} product lines`
+                    : `${o.quantity} ${o.productSnapshot?.unit || "units"}`}{" "}
+                  · Quotation v{o.version} · {date(o.createdAt)}
                 </p>
               </div>
               <Badge>{o.status}</Badge>
@@ -124,6 +147,48 @@ export default function OrderDetail({
                 </Button>
               ))}
             </div>
+            {user.role !== "customer" && (
+              <div className="button-row">
+                <Button
+                  className="secondary small"
+                  disabled={
+                    !o.acceptedAt ||
+                    ["Return requested", "Refunded", "Delivered"].includes(
+                      o.status,
+                    )
+                  }
+                  onClick={() =>
+                    command({
+                      title: "Allocate available stock",
+                      path: "/orders/{id}/reserve",
+                      method: "POST",
+                    })
+                  }
+                >
+                  Allocate stock
+                </Button>
+                {["admin", "manager", "seller"].includes(user.role) && (
+                  <Button
+                    className="secondary small"
+                    disabled={
+                      !o.acceptedAt ||
+                      ["Return requested", "Refunded", "Delivered"].includes(
+                        o.status,
+                      )
+                    }
+                    onClick={() =>
+                      command({
+                        title: "Request procurement for shortage",
+                        path: "/orders/{id}/procurement-requests",
+                        method: "POST",
+                      })
+                    }
+                  >
+                    Request procurement
+                  </Button>
+                )}
+              </div>
+            )}
             <div className="detail-tabs">
               {[
                 "overview",
@@ -131,6 +196,10 @@ export default function OrderDetail({
                 "shipments",
                 "returns",
                 "documents",
+                "history",
+                ...(user.role !== "customer"
+                  ? ["reservations", "procurementRequests"]
+                  : []),
               ].map((name) => (
                 <button
                   key={name}
@@ -139,13 +208,32 @@ export default function OrderDetail({
                 >
                   {t(name[0].toUpperCase() + name.slice(1))}
                   {name !== "overview" && name !== "documents"
-                    ? ` (${data[name].length})`
+                    ? ` (${data[name]?.length || 0})`
                     : ""}
                 </button>
               ))}
             </div>
             {tab === "overview" && (
               <section className="detail-section">
+                <h3>Order products</h3>
+                <DataTable
+                  items={(o.items?.length
+                    ? o.items
+                    : [
+                        {
+                          _id: "legacy",
+                          snapshot: o.productSnapshot,
+                          quantity: o.quantity,
+                          productCents: o.productCents,
+                        },
+                      ]
+                  ).map((i) => ({
+                    ...i,
+                    name: i.snapshot?.name,
+                    unit: i.snapshot?.unit,
+                  }))}
+                  columns={["name", "quantity", "unit", "productCents"]}
+                />
                 <h3>{t("Accepted trade terms")}</h3>
                 <dl className="record-details">
                   {[
@@ -213,6 +301,22 @@ export default function OrderDetail({
             {tab === "payments" && (
               <section className="detail-section">
                 <h3>{t("Payments")}</h3>
+                {!!o.acceptedAt &&
+                  !["Return requested", "Refunded"].includes(o.status) && (
+                    <ReceiptUpload
+                      api={api}
+                      id={id}
+                      onUploaded={(receiptKey) => {
+                        setReload((n) => n + 1);
+                        command({
+                          title: "Record TT payment",
+                          path: "/orders/{id}/payments",
+                          method: "POST",
+                          initial: { receiptKey },
+                        });
+                      }}
+                    />
+                  )}
                 <DataTable
                   items={data.payments}
                   columns={[
@@ -290,6 +394,42 @@ export default function OrderDetail({
                 />
               </section>
             )}
+            {tab === "history" && (
+              <section className="detail-section">
+                <h3>Approval and action history</h3>
+                <DataTable
+                  items={data.history || []}
+                  columns={
+                    user.role === "customer"
+                      ? ["action", "createdAt"]
+                      : ["action", "actor", "details", "createdAt"]
+                  }
+                />
+              </section>
+            )}
+            {tab === "reservations" && (
+              <section className="detail-section">
+                <h3>Reserved stock</h3>
+                <DataTable
+                  items={data.reservations || []}
+                  columns={["item", "batch", "quantity", "status"]}
+                />
+              </section>
+            )}
+            {tab === "procurementRequests" && (
+              <section className="detail-section">
+                <h3>Linked procurement</h3>
+                <DataTable
+                  items={data.procurementRequests || []}
+                  columns={[
+                    "product",
+                    "quantity",
+                    "receivedQuantity",
+                    "status",
+                  ]}
+                />
+              </section>
+            )}
             {tab === "documents" && (
               <OrderDocuments
                 api={api}
@@ -297,6 +437,7 @@ export default function OrderDetail({
                 user={user}
                 onCommand={onCommand}
                 refresh={refresh}
+                invoices={data.invoices || []}
               />
             )}
           </>

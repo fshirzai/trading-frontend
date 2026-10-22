@@ -15,6 +15,7 @@ import { journalTotals } from "./workflows.js";
 import { safeCheckoutUrl } from "./api.js";
 const relationPaths = {
   product: "/catalog",
+  request: "/procurement-requests",
   customer: "/records/party",
   supplier: "/records/party",
   warehouse: "/records/warehouse",
@@ -246,7 +247,7 @@ export function Fields({
               {/Cents$/.test(key)
                 ? "Integer cents: $10.00 = 1000"
                 : /quantity|moq|Quantity/.test(key)
-                  ? "Tonnes • up to 3 decimal places"
+                  ? "Product units • up to 3 decimal places"
                   : /amount|Cost|Total|Fees|salary|deduction|Fee/.test(key)
                     ? "USD • up to 2 decimal places"
                     : key === "csv"
@@ -283,8 +284,11 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
       ];
     if (command.path === "/users" && user?.role === "manager")
       copy.properties.role.enum = ["seller", "procurement"];
+    if (command.path === "/orders/{id}/payments" && user?.role === "customer")
+      copy.required = [...new Set([...(copy.required || []), "receiptKey"])];
+
     return copy;
-  }, [command.path, command.method, user?.role]);
+  }, [command.path, command.method, user?.role, command.context]);
   const [values, setValues] = useState(() => ({
       ...defaults(schema || {}),
       ...command.initial,
@@ -342,13 +346,23 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
             r.nextCursor || null,
           ];
         } catch (e) {
-          if(live)setError(e);
+          if (live) setError(e);
           return [k, [], null];
         }
       }),
     ).then((pairs) => {
       if (live) {
-        setChoices(Object.fromEntries(pairs.map(([k, v]) => [k, v])));
+        setChoices({
+          ...Object.fromEntries(pairs.map(([k, v]) => [k, v])),
+          ...(command.context?.items?.length
+            ? {
+                item: command.context.items.map((i) => ({
+                  value: i._id,
+                  label: `${i.snapshot?.name?.[language] || i.snapshot?.name?.en || "Product"} - ${i.quantity} ${i.snapshot?.unit || "units"}`,
+                })),
+              }
+            : {}),
+        });
         setChoiceCursors(Object.fromEntries(pairs.map(([k, , c]) => [k, c])));
       }
     });
@@ -601,7 +615,19 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
             <Fields
               schema={schema}
               values={values}
-              onChange={setValues}
+              onChange={(v) =>
+                setValues(
+                  v.items?.length
+                    ? {
+                        ...v,
+                        productTotal: v.items.reduce(
+                          (n, i) => n + Number(i.productTotal || 0),
+                          0,
+                        ),
+                      }
+                    : v,
+                )
+              }
               choices={choices}
               nextChoices={choiceCursors}
               onLoadMore={loadChoices}

@@ -1,3 +1,7 @@
+# Version 2.2 update
+
+Read `UPGRADE_2.2.md` before uploading. This release pairs with backend 2.2 and Next.js 16.4.2.
+
 # Trading frontend 2.0 — live backend integration
 
 This is the connected application for Trading Backend **2.1**. There are no sample orders, preview users or fake metrics. Trading actions call your backend. Dashboard totals are aggregated from MongoDB, lists display related record names, and protected order files and staff accounts have actual listing screens.

@@ -1,6 +1,7 @@
 export function canUseAction(action, row, role, { cardEnabled = false } = {}) {
   if (action.roles && !action.roles.includes(role)) return false;
   const p = action.path;
+  if (p === "/notification-delivery/{id}/retry") return row.state === "Failed";
   if (p.includes("/checkout"))
     return (
       cardEnabled &&

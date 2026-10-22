@@ -137,6 +137,28 @@ test("frontend API client trades against the real seeded backend over HTTP", asy
       }),
       (error) => error.status === 403,
     );
+    const videoBytes = Buffer.alloc(64, 1);
+    videoBytes.write("ftyp", 4);
+    const video = await admin.request(`/products/${ids.product}/video`, {
+      method: "POST",
+      body: { size: videoBytes.length, mime: "video/mp4" },
+    });
+    await admin.request(`/products/${ids.product}/video/${video.id}/chunks`, {
+      method: "POST",
+      raw: true,
+      body: videoBytes,
+      headers: { "Content-Type": "video/mp4", "X-Video-Chunk": "0" },
+    });
+    await admin.request(`/products/${ids.product}/video/${video.id}/complete`, {
+      method: "POST",
+      body: {},
+    });
+    const range = await fetch(base + `/catalog/${ids.product}/video`, {
+      headers: { Range: "bytes=4-7" },
+    });
+    assert.equal(range.status, 206);
+    assert.equal(range.headers.get("content-range"), "bytes 4-7/64");
+    assert.equal(Buffer.from(await range.arrayBuffer()).toString(), "ftyp");
     await assert.rejects(
       customer.request("/records/journal"),
       (e) => e.status === 403,
@@ -166,12 +188,19 @@ test("frontend API client trades against the real seeded backend over HTTP", asy
       body: {},
       key: randomUUID(),
     });
+    const receipt = await customer.request(`/orders/${order._id}/receipts`, {
+      method: "POST",
+      raw: true,
+      body: imageBytes,
+      headers: { "Content-Type": "image/png" },
+    });
     const payment = await customer.request(`/orders/${order._id}/payments`, {
       method: "POST",
       body: {
         amount: 500,
         method: "TT",
         reference: "frontend-integration-" + randomUUID(),
+        receiptKey: receipt.id,
       },
       key: randomUUID(),
     });
@@ -201,7 +230,12 @@ test("frontend API client trades against the real seeded backend over HTTP", asy
     });
     const second = await customer.request(`/orders/${order._id}/payments`, {
       method: "POST",
-      body: { amount: 500, method: "TT", reference: "balance-" + randomUUID() },
+      body: {
+        amount: 500,
+        method: "TT",
+        reference: "balance-" + randomUUID(),
+        receiptKey: receipt.id,
+      },
       key: randomUUID(),
     });
     await admin.request(`/payments/${second._id}/verify`, {
@@ -242,7 +276,7 @@ test("frontend API client trades against the real seeded backend over HTTP", asy
     assert.equal(users.items[0].mfaSecret, undefined);
     assert.equal(
       (await customer.request(`/orders/${order._id}/documents`)).items.length,
-      0,
+      1,
     );
     await customer.request("/auth/logout", { method: "POST", body: {} });
     customer.clear();

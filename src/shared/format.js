@@ -36,6 +36,12 @@ export function formBody(schema, values) {
       if (schema.required?.includes(key)) throw Error(`${key} is required`);
       continue;
     }
+    if (
+      field.type === "array" &&
+      value.length === 0 &&
+      !schema.required?.includes(key)
+    )
+      continue;
     if (field.type === "object") result[key] = formBody(field, value);
     else if (field.type === "array")
       result[key] = value.map((v) =>

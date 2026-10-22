@@ -3,8 +3,8 @@ export default {
   title: "Inventory",
   icon: "box",
   roles: ["admin", "manager", "seller", "procurement"],
-  path: "/records/batch",
-  columns: ["code", "product", "warehouse", "quantity", "valueCents"],
+  path: "/stock/summary",
+  columns: ["name", "quantity", "reserved", "available", "locations"],
   actions: [
     {
       title: "Transfer stock",

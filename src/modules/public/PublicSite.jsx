@@ -1,4 +1,5 @@
 "use client";
+import ProductVideo from "../catalog/ProductVideo.jsx";
 import { Localized } from "../../shared/i18n.jsx";
 import { useEffect, useState } from "react";
 import {
@@ -225,6 +226,7 @@ export default function PublicSite({ api, onNavigate, user, onInquiry }) {
                 {visible.map((p, i) => (
                   <article className="product-card" key={recordId(p)}>
                     <ProductGallery product={p} />
+                    {p.video && <ProductVideo product={p} api={api} />}
                     <div className="product-info">
                       <div>
                         <span className="eyebrow">

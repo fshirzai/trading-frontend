@@ -1,3 +1,5 @@
+import procurementRequests from "./procurement/requests.module.js";
+import notificationDelivery from "./notifications/delivery.module.js";
 import dashboard from "./dashboard/module.js";
 import sales from "./sales/module.js";
 import inquiries from "./inquiries/module.js";
@@ -28,6 +30,8 @@ export const modules = [
   inventory,
   warehouses,
   procurement,
+  procurementRequests,
+  notificationDelivery,
   logistics,
   payments,
   returns,

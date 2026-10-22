@@ -1,0 +1,24 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> trading-company-frontend@2.2.0 test:ui
+> node --import ./tests/register.mjs --test tests/ui.test.jsx
+
+✔ product gallery switches between actual image URLs and opens a full gallery (95.473613ms)
+✔ product image manager uploads multiple files sequentially then changes cover, replaces and removes (113.201043ms)
+✔ product file selection rejects oversized, unsupported and excessive images (0.579427ms)
+✔ all color palettes support persisted dark mode and RTL language (14.872631ms)
+✔ login submits real credentials and provides a returned user (20.830405ms)
+✔ customer inquiry uses product names and sends numeric quantity without customer spoofing (37.782442ms)
+✔ journal form blocks unbalanced posting before calling the API (38.017517ms)
+✔ dashboard renders backend totals without a sample-data mode (39.257693ms)
+✔ order document tab lists files by name and disables quarantined downloads (53.169891ms)
+✔ staff access loads named accounts and gives row actions only to administrators (50.017973ms)
+✔ registration refuses mismatched password confirmation without an API write (17.919371ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1029.626068
