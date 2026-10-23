@@ -1,4 +1,5 @@
 "use client";
+import DemoDataSettings from "./DemoDataSettings.jsx";
 import HesabPaySettings from "./HesabPaySettings.jsx";
 import { companyPhoto } from "../public/Storefront.jsx";
 import { usePreferences, Localized } from "../../shared/i18n.jsx";
@@ -382,6 +383,7 @@ export default function SystemSettings({ api, user }) {
         </form>
       </div>
       <HesabPaySettings api={api} />
+      <DemoDataSettings api={api} />
     </Localized>
   );
 }

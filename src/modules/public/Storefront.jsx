@@ -39,12 +39,12 @@ function ProductCard({ product: p }) {
         )}
       </a>
       <div className="store-product-copy">
-        <span className="eyebrow">{p.category || t("Wholesale")}</span>
+        <span className="eyebrow">{t(p.category || "Wholesale")}</span>
         <h2>
           <a href={"/product/?id=" + p._id}>{productName(p, language)}</a>
         </h2>
         <p>
-          {[p.origin, p.grade && t("Grade") + " " + p.grade, p.packaging]
+          {[t(p.origin), p.grade && t("Grade") + " " + p.grade, t(p.packaging)]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -174,7 +174,7 @@ function Catalog({ api, featured = false }) {
                 <option value="">{t("All")}</option>
                 {options.map((x) => (
                   <option key={x} value={x}>
-                    {x}
+                    {t(x)}
                   </option>
                 ))}
               </select>
@@ -299,7 +299,7 @@ function ProductPage({ api }) {
           </div>
           <div>
             <span className="eyebrow">
-              {product.category || t("Wholesale agriculture")}
+              {t(product.category || "Wholesale agriculture")}
             </span>
             <h1>{productName(product, language)}</h1>
             <p className="store-lead">
@@ -320,7 +320,7 @@ function ProductPage({ api }) {
                 .map(([k, v]) => (
                   <div key={k}>
                     <dt>{t(k)}</dt>
-                    <dd>{v}</dd>
+                    <dd>{t(v)}</dd>
                   </div>
                 ))}
             </dl>
@@ -518,7 +518,7 @@ function CartPage({ api, user, onNavigate }) {
                       </a>
                     </h2>
                     <p>
-                      {p?.packaging} · {p?.unit && t(p.unit)}
+                      {t(p?.packaging)} · {p?.unit && t(p.unit)}
                     </p>
                     {p?.unavailable && (
                       <p className="error">
@@ -900,12 +900,12 @@ export default function Storefront({ api, user, onNavigate, page = "home" }) {
             <div className="store-hero-shade" />
             <div className="store-hero-copy">
               <span className="eyebrow">
-                {t("ROOTED IN AGRICULTURE. READY FOR TRADE.")}
+                {t("AGRICULTURAL PRODUCTS · WHOLESALE TRADE")}
               </span>
-              <h1>{t("Good origins. Clear agreements.")}</h1>
+              <h1>{t("Agricultural products for your business.")}</h1>
               <p>
                 {t(
-                  "Discover agricultural products, build your selection and trade with confidence from quotation to handover.",
+                  "Browse our products, choose the quantities you need and request a price. Review payment and delivery details before placing your order.",
                 )}
               </p>
               <div className="button-row">
@@ -918,7 +918,7 @@ export default function Storefront({ api, user, onNavigate, page = "home" }) {
               </div>
             </div>
             <div className="hero-caption">
-              {t("Selection · Quality · Coordination")}
+              {t("Quality products · Wholesale supply")}
             </div>
           </section>
           <div className="store-promises">

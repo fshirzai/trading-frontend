@@ -839,3 +839,54 @@ test("order-list card action opens HesabPay amount confirmation instead of the S
   assert.ok(screen.getByRole("button", { name: "Continue to HesabPay" }));
   assert.equal(commands, 0);
 });
+
+test("administrator demo-data panel submits explicit credentials and shows all role accounts", async () => {
+  const { default: DemoDataSettings } =
+    await import("../src/modules/settings/DemoDataSettings.jsx");
+  let payload;
+  const accounts = [
+    "admin",
+    "manager",
+    "seller",
+    "procurement",
+    "customer",
+  ].map((role) => ({
+    role,
+    email: role + "@demo.test",
+    existing: role === "admin",
+  }));
+  const api = {
+    request: async (path, options) => {
+      assert.equal(path, "/admin/demo-data");
+      if (options?.method === "POST") {
+        payload = options.body;
+        return { accounts };
+      }
+      return { enabled: true, seeded: false };
+    },
+  };
+  mount(<DemoDataSettings api={api} />);
+  await screen.findByLabelText("Administrator password");
+  fireEvent.change(screen.getByLabelText("Administrator password"), {
+    target: { value: "Existing-Admin-Password!" },
+  });
+  fireEvent.change(screen.getByLabelText("Demo account password"), {
+    target: { value: "New-Demo-Password!" },
+  });
+  assert.equal(
+    screen.getByRole("button", { name: "Create demo data" }).disabled,
+    true,
+  );
+  fireEvent.change(screen.getByLabelText("Type ADD DEMO DATA to confirm"), {
+    target: { value: "ADD DEMO DATA" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Create demo data" }));
+  await screen.findByText("Demo data has already been created.");
+  assert.deepEqual(payload, {
+    adminPassword: "Existing-Admin-Password!",
+    demoPassword: "New-Demo-Password!",
+    confirmation: "ADD DEMO DATA",
+  });
+  for (const a of accounts) assert.ok(screen.getByText(a.email));
+  assert.equal(screen.queryByLabelText("Administrator password"), null);
+});

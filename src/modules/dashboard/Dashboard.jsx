@@ -4,7 +4,7 @@ import Icon from "../../shared/icons.jsx";
 import { Badge, Button, ErrorBox } from "../../shared/ui.jsx";
 import { Empty } from "../../shared/ui.jsx";
 import { money, productName, shortId, date } from "../../shared/format.js";
-import { usePreferences } from "../../shared/i18n.jsx";
+import { usePreferences, Localized } from "../../shared/i18n.jsx";
 export default function Dashboard({
   api,
   user,
@@ -44,11 +44,13 @@ export default function Dashboard({
   const max = Math.max(1, ...daily.map((x) => x.valueCents || 0));
   if (user.role === "procurement")
     return (
-      <>
+      <Localized>
         <div className="page-heading">
           <div>
             <span className="eyebrow">PROCUREMENT WORKSPACE</span>
-            <h1>Welcome back, {user.name?.split(" ")[0]}</h1>
+            <h1>
+              {t("Welcome back")}, {user.name?.split(" ")[0]}
+            </h1>
             <p>
               Review shortages, purchase stock and receive it into the right
               warehouse.
@@ -71,7 +73,7 @@ export default function Dashboard({
             ["Active warehouses", data?.procurement?.warehouses, "warehouses"],
           ].map(([title, value, key]) => (
             <article className="metric" key={key}>
-              <span>{title}</span>
+              <span>{t(title)}</span>
               <strong>{value ?? "..."}</strong>
               <Button onClick={() => onNavigate(key)}>Open</Button>
             </article>
@@ -85,14 +87,14 @@ export default function Dashboard({
             Products and media
           </Button>
         </div>
-      </>
+      </Localized>
     );
   return (
     <>
       <div className="page-heading">
         <div>
           <span className="eyebrow">
-            LIVE OPERATIONS · {data?.scope || "Loading"}
+            LIVE OPERATIONS · {t(data?.scope || "Loading")}
           </span>
           <h1>
             {t("Welcome back")}, {user.name?.split(" ")[0]}
@@ -133,7 +135,7 @@ export default function Dashboard({
               <Icon name={icon} />
             </div>
             <strong>{value ?? "—"}</strong>
-            <small>{data?.scope || "Loading database totals"}</small>
+            <small>{t(data?.scope || "Loading database totals")}</small>
           </article>
         ))}
       </div>
@@ -256,7 +258,7 @@ export default function Dashboard({
               </div>
             ))}
             {data && !data.stages.length && (
-              <p className="muted">No orders yet.</p>
+              <p className="muted">{t("No orders yet.")}</p>
             )}
           </div>
         </section>
@@ -306,7 +308,9 @@ export default function Dashboard({
                     <b>{Number(data.inventory.quantity.toFixed(3))} t</b>{" "}
                     {t("available across warehouses")}
                   </p>
-                  <small>{data.inventory.batches} stock batches</small>
+                  <small>
+                    {data.inventory.batches} {t("stock batches")}
+                  </small>
                   <Button
                     className="subtle small"
                     onClick={() => onNavigate("inventory")}

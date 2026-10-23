@@ -58,7 +58,7 @@ test("npm development entry starts Next pages and forwards the same-origin API w
     assert.equal(page.status, 200);
     const html = await page.text();
     assert.match(html, /Shirzai/i);
-    assert.match(html, /Good origins. Clear agreements./);
+    assert.match(html, /Agricultural products for your business./);
   } finally {
     child.kill("SIGTERM");
     await new Promise((r) =>
