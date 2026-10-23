@@ -4,7 +4,7 @@ import { publicPaths } from "./modules/public/SiteLayout.jsx";
 import BrandingProvider from "./modules/settings/BrandingProvider.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createApi } from "./shared/api.js";
-import { Preferences, usePreferences } from "./shared/i18n.jsx";
+import { Preferences, usePreferences, Localized } from "./shared/i18n.jsx";
 import { CommandForm } from "./shared/forms.jsx";
 import { Button, ErrorBox, Logo, PreferencesControls } from "./shared/ui.jsx";
 import { allowedModules } from "./modules/registry.js";
@@ -12,6 +12,7 @@ import PublicSite from "./modules/public/PublicSite.jsx";
 import AuthPage from "./modules/auth/AuthPage.jsx";
 import Workspace from "./Workspace.jsx";
 function App({ initialView = "home" }) {
+  const { t } = usePreferences();
   const [view, setView] = useState(initialView),
     [active, setActive] = useState("dashboard"),
     [user, setUser] = useState(null),
@@ -280,7 +281,7 @@ function App({ initialView = "home" }) {
         />
       )}
       <div className="toast-region" aria-live="polite">
-        {toast && <div className="toast">{toast}</div>}
+        {toast && <div className="toast">{t(toast)}</div>}
       </div>
     </>
   );
@@ -288,61 +289,63 @@ function App({ initialView = "home" }) {
 function ConnectionPanel({ status, error, onRetry }) {
   const { t } = usePreferences();
   return (
-    <main>
-      <header className="public-header">
-        <Logo />
-        <PreferencesControls />
-      </header>
-      <section className="connection-panel">
-        <span className="eyebrow">BACKEND CONNECTION</span>
-        <h1>
-          {status === "checking"
-            ? "Connecting to your company backend…"
-            : "Connect your backend to start working"}
-        </h1>
-        <p>
-          This application uses your real trading database. Start the backend on
-          port 4000 and run this frontend on port 3000.
-        </p>
-        {status === "checking" ? (
-          <div className="table-loading" role="status">
-            Checking database readiness and session…
-          </div>
-        ) : (
-          <>
-            <ErrorBox error={error} />
-            <ol className="check-list">
-              <li>
-                <b>1</b>
-                <div>
-                  In your backend folder: <code>npm run dev</code>
-                </div>
-              </li>
-              <li>
-                <b>2</b>
-                <div>
-                  In this frontend folder: <code>npm run dev</code>
-                </div>
-              </li>
-              <li>
-                <b>3</b>
-                <div>
-                  Open <code>http://localhost:3000</code> in your browser.
-                </div>
-              </li>
-            </ol>
-            <p className="notice">
-              The private hosted page cannot reach a database on your computer.
-              Use the downloaded source locally, or configure a deployed HTTPS
-              backend.
-            </p>
-            <Button onClick={onRetry} icon="refresh">
-              {t("Retry connection")}
-            </Button>
-          </>
-        )}
-      </section>
-    </main>
+    <Localized>
+      <main>
+        <header className="public-header">
+          <Logo />
+          <PreferencesControls />
+        </header>
+        <section className="connection-panel">
+          <span className="eyebrow">BACKEND CONNECTION</span>
+          <h1>
+            {status === "checking"
+              ? "Connecting to your company backend…"
+              : "Connect your backend to start working"}
+          </h1>
+          <p>
+            This application uses your real trading database. Start the backend
+            on port 4000 and run this frontend on port 3000.
+          </p>
+          {status === "checking" ? (
+            <div className="table-loading" role="status">
+              Checking database readiness and session…
+            </div>
+          ) : (
+            <>
+              <ErrorBox error={error} />
+              <ol className="check-list">
+                <li>
+                  <b>1</b>
+                  <div>
+                    In your backend folder: <code>npm run dev</code>
+                  </div>
+                </li>
+                <li>
+                  <b>2</b>
+                  <div>
+                    In this frontend folder: <code>npm run dev</code>
+                  </div>
+                </li>
+                <li>
+                  <b>3</b>
+                  <div>
+                    Open <code>http://localhost:3000</code> in your browser.
+                  </div>
+                </li>
+              </ol>
+              <p className="notice">
+                The private hosted page cannot reach a database on your
+                computer. Use the downloaded source locally, or configure a
+                deployed HTTPS backend.
+              </p>
+              <Button onClick={onRetry} icon="refresh">
+                {t("Retry connection")}
+              </Button>
+            </>
+          )}
+        </section>
+      </main>
+    </Localized>
   );
 }
 export default function TradingApp(props) {

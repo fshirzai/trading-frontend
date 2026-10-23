@@ -1,4 +1,5 @@
 "use client";
+import { Localized } from "../../shared/i18n.jsx";
 import { useState } from "react";
 import { ErrorBox, Button } from "../../shared/ui.jsx";
 export default function ReceiptUpload({ api, id, onUploaded }) {
@@ -32,24 +33,26 @@ export default function ReceiptUpload({ api, id, onUploaded }) {
     }
   }
   return (
-    <form className="upload-form" onSubmit={submit}>
-      <h3>TT receipt</h3>
-      <p>
-        Upload a clear receipt image, then select it when recording the TT
-        payment. Bank verification is separate.
-      </p>
-      <input
-        type="file"
-        required
-        aria-label="TT receipt image"
-        accept="image/jpeg,image/png,image/webp"
-        disabled={busy}
-        onChange={(e) => setFile(e.target.files?.[0])}
-      />
-      <Button type="submit" disabled={busy}>
-        Upload receipt
-      </Button>
-      <ErrorBox error={error} />
-    </form>
+    <Localized>
+      <form className="upload-form" onSubmit={submit}>
+        <h3>TT receipt</h3>
+        <p>
+          Upload a clear receipt image, then select it when recording the TT
+          payment. Bank verification is separate.
+        </p>
+        <input
+          type="file"
+          required
+          aria-label="TT receipt image"
+          accept="image/jpeg,image/png,image/webp"
+          disabled={busy}
+          onChange={(e) => setFile(e.target.files?.[0])}
+        />
+        <Button type="submit" disabled={busy}>
+          Upload receipt
+        </Button>
+        <ErrorBox error={error} />
+      </form>
+    </Localized>
   );
 }

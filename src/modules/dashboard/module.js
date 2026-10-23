@@ -1,6 +1,6 @@
 export default {
   key: "dashboard",
-  title: "Overview",
+  title: "Dashboard",
   icon: "grid",
   roles: ["admin", "manager", "seller", "procurement", "customer"],
 };

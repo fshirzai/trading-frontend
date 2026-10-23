@@ -44,10 +44,13 @@ export function Preferences({ children }) {
   }, [prefs, theme, ready, language, color, density]);
   const change = (key, value) =>
     setPrefs((p) => validPreferences({ ...p, [key]: value }));
-  const t = (value) =>
-    typeof value === "string"
-      ? (messages[language] || {})[value] || value
-      : value;
+  const t = (value, params = {}) => {
+    if (typeof value !== "string") return value;
+    const translated = (messages[language] || {})[value] || value;
+    return translated.replace(/\{(\w+)\}/g, (all, key) =>
+      params[key] === undefined ? all : String(params[key]),
+    );
+  };
   return (
     <I18n.Provider
       value={{
@@ -74,8 +77,14 @@ export function Localized({ children }) {
   const { t } = usePreferences();
   function visit(node) {
     if (typeof node === "string") {
-      const trimmed = node.trim();
-      return node.replace(trimmed, t(trimmed));
+      const normalized = node.replace(/\s+/g, " ").trim();
+      const translated = t(normalized);
+      if (translated === normalized) return node;
+      return (
+        (/^\s/.test(node) ? " " : "") +
+        translated +
+        (/\s$/.test(node) ? " " : "")
+      );
     }
     if (Array.isArray(node)) return Children.map(node, visit);
     if (!isValidElement(node)) return node;

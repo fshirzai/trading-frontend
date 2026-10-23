@@ -1,4 +1,6 @@
 "use client";
+import { usePreferences, Localized } from "../../shared/i18n.jsx";
+import DocumentViewer from "./DocumentViewer.jsx";
 import ReceiptUpload from "./ReceiptUpload.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox, Badge } from "../../shared/ui.jsx";
@@ -22,14 +24,17 @@ export default function OrderDocuments({
   onCommand,
   refresh,
   invoices = [],
+  accepted = false,
 }) {
+  const { t } = usePreferences();
   const [items, setItems] = useState([]),
     [cursor, setCursor] = useState(""),
     [next, setNext] = useState(null),
     [error, setError] = useState(null),
     [busy, setBusy] = useState(false),
     [reload, setReload] = useState(0),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [viewing, setViewing] = useState(null);
   useEffect(() => {
     let live = true;
     api
@@ -93,173 +98,226 @@ export default function OrderDocuments({
     });
   }
   return (
-    <section className="detail-section">
-      <h3>Trade documents</h3>
-      {user.role !== "customer" && (
-        <Button
-          className="secondary"
-          onClick={() =>
-            onCommand({
-              title: "Issue invoice",
-              path: "/orders/{id}/invoices",
-              method: "POST",
-              id,
-            })
-          }
-        >
-          Issue invoice
-        </Button>
-      )}
-      {invoices.map((i) => (
-        <div className="document-row" key={i._id}>
-          <b>{i.number}</b>
+    <Localized>
+      <section className="detail-section">
+        <h3>Trade documents</h3>
+        {["admin", "manager", "seller"].includes(user.role) && accepted && (
           <Button
-            className="secondary small"
+            className="secondary"
             onClick={() =>
-              run(() =>
-                download(api, `/invoices/${i._id}/pdf`, `${i.number}.pdf`),
-              )
+              onCommand({
+                title: "Issue invoice",
+                path: "/orders/{id}/invoices",
+                method: "POST",
+                id,
+              })
             }
           >
-            Download issued invoice
+            Issue invoice
           </Button>
-        </div>
-      ))}
-      <div className="button-row">
-        {["proforma", "invoice", "packing-list"].map((kind) => (
-          <Button
-            key={kind}
-            icon="file"
-            className="secondary small"
-            disabled={busy}
-            onClick={() =>
-              run(() =>
-                download(
-                  api,
-                  `/orders/${id}/documents/${kind}.pdf`,
-                  `${kind}-${id}.pdf`,
-                ),
-              )
-            }
-          >
-            {kind.replaceAll("-", " ")} PDF
-          </Button>
-        ))}
-      </div>
-      <h3 style={{ marginTop: 25 }}>Uploaded documents</h3>
-      <div className="document-list">
-        {items.map((doc) => (
-          <article className="document-row" key={doc._id}>
-            <Icon name="file" />
-            <div>
-              <b>{doc.name}</b>
-              <small>
-                {doc.kind.replaceAll("-", " ")} · {(doc.size / 1024).toFixed(1)}{" "}
-                KB · {date(doc.createdAt)}
-              </small>
-            </div>
-            <Badge>{doc.status}</Badge>
+        )}
+        {invoices.map((i) => (
+          <div className="document-row" key={i._id}>
+            <b>{i.number}</b>
             <Button
               className="secondary small"
-              disabled={busy || doc.status !== "Clean"}
+              onClick={() =>
+                setViewing({
+                  path: `/invoices/${i._id}/pdf`,
+                  title: "Commercial invoice",
+                  name: `${i.number}.pdf`,
+                })
+              }
+            >
+              View / print invoice
+            </Button>
+            <Button
+              className="secondary small"
               onClick={() =>
                 run(() =>
-                  download(
-                    api,
-                    doc.normalized
-                      ? `/receipts/${doc._id}`
-                      : `/documents/${doc._id}`,
-                    doc.name,
-                  ),
+                  download(api, `/invoices/${i._id}/pdf`, `${i.number}.pdf`),
                 )
               }
             >
-              Download
+              Download issued invoice
             </Button>
-            {user.role === "admin" && doc.status === "Quarantined" && (
+          </div>
+        ))}
+        <div className="button-row">
+          {(accepted
+            ? ["proforma", "invoice", "packing-list"]
+            : ["proforma", "packing-list"]
+          ).map((kind) => (
+            <span className="document-actions" key={kind}>
               <Button
                 className="secondary small"
                 onClick={() =>
-                  onCommand({
-                    title: "Scan document",
-                    path: "/documents/{id}/scan",
-                    id: doc._id,
-                    method: "POST",
+                  setViewing({
+                    path: `/orders/${id}/documents/${kind}.pdf`,
+                    title: {
+                      proforma: "Proforma invoice",
+                      invoice: "Commercial invoice",
+                      "packing-list": "Packing list",
+                    }[kind],
+                    name: `${kind}-${id}.pdf`,
                   })
                 }
               >
-                Scan
+                {t(
+                  {
+                    proforma: "View / print proforma",
+                    invoice: "View / print invoice",
+                    "packing-list": "View / print packing list",
+                  }[kind],
+                )}
               </Button>
-            )}
-          </article>
-        ))}
-        {!items.length && (
-          <p className="muted">No uploaded documents for this order yet.</p>
-        )}
-      </div>
-      <div className="button-row">
-        <Button
-          className="subtle small"
-          onClick={() => setReload((n) => n + 1)}
-          icon="refresh"
-        >
-          Refresh scan results
-        </Button>
-        {cursor && (
-          <Button className="secondary small" onClick={() => setCursor("")}>
-            First page
-          </Button>
-        )}
-        {next && (
-          <Button className="secondary small" onClick={() => setCursor(next)}>
-            Next page
-          </Button>
-        )}
-      </div>
-      <ReceiptUpload
-        api={api}
-        id={id}
-        onUploaded={() => {
-          setReload((n) => n + 1);
-          setMessage(
-            "Receipt uploaded. Select it when recording your TT payment.",
-          );
-        }}
-      />
-      <details>
-        <summary>
-          Additional scanned documents (requires enabled document storage)
-        </summary>
-        <form onSubmit={upload} className="upload-form">
-          <label>
-            Document kind
-            <select name="kind">
-              <option value="payment-receipt">Payment receipt</option>
-              {user.role !== "customer" && (
-                <option value="trade-document">Trade document</option>
+              <Button
+                icon="file"
+                className="secondary small"
+                disabled={busy}
+                onClick={() =>
+                  run(() =>
+                    download(
+                      api,
+                      `/orders/${id}/documents/${kind}.pdf`,
+                      `${kind}-${id}.pdf`,
+                    ),
+                  )
+                }
+              >
+                {t(
+                  {
+                    proforma: "Proforma PDF",
+                    invoice: "Invoice PDF",
+                    "packing-list": "Packing list PDF",
+                  }[kind],
+                )}
+              </Button>
+            </span>
+          ))}
+        </div>
+        <h3 style={{ marginTop: 25 }}>Uploaded documents</h3>
+        <div className="document-list">
+          {items.map((doc) => (
+            <article className="document-row" key={doc._id}>
+              <Icon name="file" />
+              <div>
+                <b>{doc.name}</b>
+                <small>
+                  {doc.kind.replaceAll("-", " ")} ·{" "}
+                  {(doc.size / 1024).toFixed(1)} KB · {date(doc.createdAt)}
+                </small>
+              </div>
+              <Badge>{doc.status}</Badge>
+              <Button
+                className="secondary small"
+                disabled={busy || doc.status !== "Clean"}
+                onClick={() =>
+                  run(() =>
+                    download(
+                      api,
+                      doc.normalized
+                        ? `/receipts/${doc._id}`
+                        : `/documents/${doc._id}`,
+                      doc.name,
+                    ),
+                  )
+                }
+              >
+                Download
+              </Button>
+              {user.role === "admin" && doc.status === "Quarantined" && (
+                <Button
+                  className="secondary small"
+                  onClick={() =>
+                    onCommand({
+                      title: "Scan document",
+                      path: "/documents/{id}/scan",
+                      id: doc._id,
+                      method: "POST",
+                    })
+                  }
+                >
+                  Scan
+                </Button>
               )}
-            </select>
-          </label>
-          <label>
-            PDF, PNG or JPEG · max 5 MiB
-            <input
-              name="file"
-              type="file"
-              required
-              accept="application/pdf,image/png,image/jpeg"
-            />
-          </label>
-          <Button icon="plus" disabled={busy} type="submit">
-            Upload
+            </article>
+          ))}
+          {!items.length && (
+            <p className="muted">No uploaded documents for this order yet.</p>
+          )}
+        </div>
+        <div className="button-row">
+          <Button
+            className="subtle small"
+            onClick={() => setReload((n) => n + 1)}
+            icon="refresh"
+          >
+            Refresh scan results
           </Button>
-        </form>
-      </details>
-      {message && (
-        <p className="success-note" role="status">
-          {message}
-        </p>
-      )}
-      <ErrorBox error={error} />
-    </section>
+          {cursor && (
+            <Button className="secondary small" onClick={() => setCursor("")}>
+              First page
+            </Button>
+          )}
+          {next && (
+            <Button className="secondary small" onClick={() => setCursor(next)}>
+              Next page
+            </Button>
+          )}
+        </div>
+        <ReceiptUpload
+          api={api}
+          id={id}
+          onUploaded={() => {
+            setReload((n) => n + 1);
+            setMessage(
+              "Receipt uploaded. Select it when recording your TT payment.",
+            );
+          }}
+        />
+        <details>
+          <summary>
+            Additional scanned documents (requires enabled document storage)
+          </summary>
+          <form onSubmit={upload} className="upload-form">
+            <label>
+              Document kind
+              <select name="kind">
+                <option value="payment-receipt">Payment receipt</option>
+                {user.role !== "customer" && (
+                  <option value="trade-document">Trade document</option>
+                )}
+              </select>
+            </label>
+            <label>
+              PDF, PNG or JPEG · max 5 MiB
+              <input
+                name="file"
+                type="file"
+                required
+                accept="application/pdf,image/png,image/jpeg"
+              />
+            </label>
+            <Button icon="plus" disabled={busy} type="submit">
+              Upload
+            </Button>
+          </form>
+        </details>
+        {message && (
+          <p className="success-note" role="status">
+            {message}
+          </p>
+        )}
+        <ErrorBox error={error} />
+        {viewing && (
+          <DocumentViewer
+            api={api}
+            document={viewing}
+            onClose={() => setViewing(null)}
+          />
+        )}
+      </section>
+    </Localized>
   );
 }

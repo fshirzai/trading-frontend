@@ -128,3 +128,7 @@ Security design references: [OWASP session storage guidance](https://cheatsheets
 ## Multiple product images
 
 See PRODUCT_IMAGES_UPDATE.md for the coordinated backend/frontend deployment. Products now have galleries, table thumbnails and image management for admin/manager/procurement. Product images are independent of disabled receipt/document uploads.
+
+## Version 2.6.1 document workflow
+
+See [UPGRADE_2.6.1.md](UPGRADE_2.6.1.md) for the grouped proforma editor, unsaved draft preview, in-app document viewer and shared print/download layout.

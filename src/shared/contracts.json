@@ -14,10 +14,7 @@
       },
       "account": {
         "type": "string",
-        "enum": [
-          "Bank",
-          "Cash"
-        ]
+        "enum": ["Bank", "Cash"]
       },
       "openingCents": {
         "type": "integer",
@@ -35,13 +32,7 @@
         "maxLength": 90000
       }
     },
-    "required": [
-      "name",
-      "account",
-      "openingCents",
-      "closingCents",
-      "csv"
-    ],
+    "required": ["name", "account", "openingCents", "closingCents", "csv"],
     "additionalProperties": false
   },
   "POST /reconciliation/lines/{id}/match": {
@@ -52,9 +43,7 @@
         "pattern": "^[a-f\\d]{24}$"
       }
     },
-    "required": [
-      "journal"
-    ],
+    "required": ["journal"],
     "additionalProperties": false
   },
   "POST /reconciliation/statements/{id}/close": {
@@ -70,9 +59,7 @@
         "pattern": "^[a-f\\d]{64}$"
       }
     },
-    "required": [
-      "token"
-    ],
+    "required": ["token"],
     "additionalProperties": false
   },
   "POST /auth/resend-verification": {
@@ -85,9 +72,7 @@
         "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
       }
     },
-    "required": [
-      "email"
-    ],
+    "required": ["email"],
     "additionalProperties": false
   },
   "POST /auth/forgot-password": {
@@ -100,9 +85,7 @@
         "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
       }
     },
-    "required": [
-      "email"
-    ],
+    "required": ["email"],
     "additionalProperties": false
   },
   "POST /auth/reset-password": {
@@ -118,10 +101,7 @@
         "maxLength": 128
       }
     },
-    "required": [
-      "token",
-      "password"
-    ],
+    "required": ["token", "password"],
     "additionalProperties": false
   },
   "POST /auth/mfa/enroll": {
@@ -133,9 +113,7 @@
         "maxLength": 128
       }
     },
-    "required": [
-      "password"
-    ],
+    "required": ["password"],
     "additionalProperties": false
   },
   "POST /auth/mfa/confirm": {
@@ -146,9 +124,7 @@
         "pattern": "^\\d{6}$"
       }
     },
-    "required": [
-      "code"
-    ],
+    "required": ["code"],
     "additionalProperties": false
   },
   "POST /auth/mfa/disable": {
@@ -165,10 +141,7 @@
         "maxLength": 24
       }
     },
-    "required": [
-      "password",
-      "code"
-    ],
+    "required": ["password", "code"],
     "additionalProperties": false
   },
   "POST /auth/register": {
@@ -196,11 +169,7 @@
         "maxLength": 200
       }
     },
-    "required": [
-      "name",
-      "email",
-      "password"
-    ],
+    "required": ["name", "email", "password"],
     "additionalProperties": false
   },
   "POST /auth/login": {
@@ -222,10 +191,7 @@
         "pattern": "^(\\d{6}|[a-f\\d]{24})$"
       }
     },
-    "required": [
-      "email",
-      "password"
-    ],
+    "required": ["email", "password"],
     "additionalProperties": false
   },
   "POST /auth/refresh": {
@@ -264,19 +230,10 @@
       },
       "role": {
         "type": "string",
-        "enum": [
-          "manager",
-          "seller",
-          "procurement"
-        ]
+        "enum": ["manager", "seller", "procurement"]
       }
     },
-    "required": [
-      "name",
-      "email",
-      "password",
-      "role"
-    ],
+    "required": ["name", "email", "password", "role"],
     "additionalProperties": false
   },
   "PATCH /users/{id}": {
@@ -287,12 +244,7 @@
       },
       "role": {
         "type": "string",
-        "enum": [
-          "manager",
-          "seller",
-          "procurement",
-          "customer"
-        ]
+        "enum": ["manager", "seller", "procurement", "customer"]
       }
     },
     "additionalProperties": false
@@ -316,10 +268,7 @@
         "maxLength": 24
       }
     },
-    "required": [
-      "oldPassword",
-      "newPassword"
-    ],
+    "required": ["oldPassword", "newPassword"],
     "additionalProperties": false
   },
   "POST /records/product": {
@@ -344,9 +293,7 @@
             "maxLength": 200
           }
         },
-        "required": [
-          "en"
-        ],
+        "required": ["en"],
         "additionalProperties": false
       },
       "sku": {
@@ -356,13 +303,7 @@
       },
       "unit": {
         "type": "string",
-        "enum": [
-          "tonne",
-          "kg",
-          "piece",
-          "box",
-          "bag"
-        ]
+        "enum": ["tonne", "kg", "piece", "box", "bag"]
       },
       "category": {
         "type": "string",
@@ -399,10 +340,7 @@
         ]
       }
     },
-    "required": [
-      "name",
-      "moq"
-    ],
+    "required": ["name", "moq"],
     "additionalProperties": false
   },
   "PATCH /records/product/{id}": {
@@ -427,9 +365,7 @@
             "maxLength": 200
           }
         },
-        "required": [
-          "en"
-        ],
+        "required": ["en"],
         "additionalProperties": false
       },
       "sku": {
@@ -439,13 +375,7 @@
       },
       "unit": {
         "type": "string",
-        "enum": [
-          "tonne",
-          "kg",
-          "piece",
-          "box",
-          "bag"
-        ]
+        "enum": ["tonne", "kg", "piece", "box", "bag"]
       },
       "category": {
         "type": "string",
@@ -496,10 +426,7 @@
       },
       "type": {
         "type": "string",
-        "enum": [
-          "customer",
-          "supplier"
-        ]
+        "enum": ["customer", "supplier"]
       },
       "country": {
         "type": "string",
@@ -523,10 +450,7 @@
         "maxLength": 2000
       }
     },
-    "required": [
-      "name",
-      "type"
-    ],
+    "required": ["name", "type"],
     "additionalProperties": false
   },
   "POST /inquiries": {
@@ -567,38 +491,22 @@
               "maximum": 1000000
             }
           },
-          "required": [
-            "product",
-            "quantity"
-          ],
+          "required": ["product", "quantity"],
           "additionalProperties": false
         }
       },
       "preferredPayment": {
         "default": "TT",
         "type": "string",
-        "enum": [
-          "TT",
-          "VISA"
-        ]
+        "enum": ["TT", "VISA"]
       },
       "source": {
         "default": "website",
         "type": "string",
-        "enum": [
-          "website",
-          "whatsapp",
-          "phone",
-          "office"
-        ]
+        "enum": ["website", "whatsapp", "phone", "office"]
       }
     },
-    "required": [
-      "product",
-      "quantity",
-      "preferredPayment",
-      "source"
-    ],
+    "required": ["product", "quantity", "preferredPayment", "source"],
     "additionalProperties": false
   },
   "POST /inquiries/{id}/proforma": {
@@ -624,15 +532,94 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "maximum": 1000000000
+            },
+            "packaging": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "bagCount": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 10000000
+            },
+            "bagWeightKg": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            },
+            "remarks": {
+              "type": "string",
+              "maxLength": 500
             }
           },
-          "required": [
-            "product",
-            "quantity",
-            "productTotal"
-          ],
+          "required": ["product", "quantity", "productTotal"],
           "additionalProperties": false
         }
+      },
+      "quotationDetails": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "maxLength": 60,
+            "pattern": "^[A-Za-z0-9./_-]*$"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "deliveryTerms": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "loadingPlace": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "transport": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "buyerContact": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "buyerRegistrationNo": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "buyerTaxNo": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "paymentInstructions": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "additionalProperties": false
       },
       "productTotal": {
         "type": "number",
@@ -663,12 +650,7 @@
         "type": "boolean"
       }
     },
-    "required": [
-      "productTotal",
-      "deliveryFees",
-      "border",
-      "splitIncluded"
-    ],
+    "required": ["productTotal", "deliveryFees", "border", "splitIncluded"],
     "additionalProperties": false
   },
   "POST /orders/{id}/revise": {
@@ -694,15 +676,94 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "maximum": 1000000000
+            },
+            "packaging": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "bagCount": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 10000000
+            },
+            "bagWeightKg": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            },
+            "remarks": {
+              "type": "string",
+              "maxLength": 500
             }
           },
-          "required": [
-            "product",
-            "quantity",
-            "productTotal"
-          ],
+          "required": ["product", "quantity", "productTotal"],
           "additionalProperties": false
         }
+      },
+      "quotationDetails": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "maxLength": 60,
+            "pattern": "^[A-Za-z0-9./_-]*$"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "deliveryTerms": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "loadingPlace": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "transport": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "buyerContact": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "buyerRegistrationNo": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "buyerTaxNo": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "paymentInstructions": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "additionalProperties": false
       },
       "productTotal": {
         "type": "number",
@@ -767,9 +828,7 @@
         "maxLength": 2000
       }
     },
-    "required": [
-      "reason"
-    ],
+    "required": ["reason"],
     "additionalProperties": false
   },
   "POST /orders/{id}/returns": {
@@ -781,9 +840,7 @@
         "maxLength": 2000
       }
     },
-    "required": [
-      "reason"
-    ],
+    "required": ["reason"],
     "additionalProperties": false
   },
   "POST /returns/{id}/complete": {
@@ -848,11 +905,7 @@
         "type": "boolean"
       }
     },
-    "required": [
-      "payment",
-      "amount",
-      "inspectionPassed"
-    ],
+    "required": ["payment", "amount", "inspectionPassed"],
     "additionalProperties": false
   },
   "POST /orders/{id}/checkout": {
@@ -864,9 +917,7 @@
         "maximum": 1000000000
       }
     },
-    "required": [
-      "amount"
-    ],
+    "required": ["amount"],
     "additionalProperties": false
   },
   "POST /orders/{id}/payments": {
@@ -891,11 +942,7 @@
         "pattern": "^[a-f\\d]{24}$"
       }
     },
-    "required": [
-      "amount",
-      "method",
-      "reference"
-    ],
+    "required": ["amount", "method", "reference"],
     "additionalProperties": false
   },
   "POST /payments/{id}/verify": {
@@ -905,9 +952,7 @@
         "type": "boolean"
       }
     },
-    "required": [
-      "bankFundsConfirmed"
-    ],
+    "required": ["bankFundsConfirmed"],
     "additionalProperties": false
   },
   "POST /purchases": {
@@ -936,12 +981,7 @@
         "pattern": "^[a-f\\d]{24}$"
       }
     },
-    "required": [
-      "supplier",
-      "product",
-      "quantity",
-      "totalCost"
-    ],
+    "required": ["supplier", "product", "quantity", "totalCost"],
     "additionalProperties": false
   },
   "POST /purchases/{id}/receive": {
@@ -962,10 +1002,7 @@
         "maxLength": 200
       }
     },
-    "required": [
-      "warehouse",
-      "batchCode"
-    ],
+    "required": ["warehouse", "batchCode"],
     "additionalProperties": false
   },
   "POST /purchases/{id}/pay": {
@@ -982,10 +1019,7 @@
         "maxLength": 200
       }
     },
-    "required": [
-      "amount",
-      "reference"
-    ],
+    "required": ["amount", "reference"],
     "additionalProperties": false
   },
   "POST /stock/transfer": {
@@ -1005,11 +1039,7 @@
         "maximum": 1000000
       }
     },
-    "required": [
-      "batch",
-      "warehouse",
-      "quantity"
-    ],
+    "required": ["batch", "warehouse", "quantity"],
     "additionalProperties": false
   },
   "POST /records/warehouse": {
@@ -1031,9 +1061,7 @@
         "maxLength": 2000
       }
     },
-    "required": [
-      "name"
-    ],
+    "required": ["name"],
     "additionalProperties": false
   },
   "PATCH /records/warehouse/{id}": {
@@ -1153,10 +1181,7 @@
         "maxLength": 2000
       }
     },
-    "required": [
-      "recipient",
-      "proof"
-    ],
+    "required": ["recipient", "proof"],
     "additionalProperties": false
   },
   "POST /journals": {
@@ -1190,19 +1215,12 @@
               "maximum": 100000000000
             }
           },
-          "required": [
-            "account",
-            "debitCents",
-            "creditCents"
-          ],
+          "required": ["account", "debitCents", "creditCents"],
           "additionalProperties": false
         }
       }
     },
-    "required": [
-      "memo",
-      "lines"
-    ],
+    "required": ["memo", "lines"],
     "additionalProperties": false
   },
   "POST /journals/{id}/reverse": {
@@ -1218,9 +1236,7 @@
         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
       }
     },
-    "required": [
-      "month"
-    ],
+    "required": ["month"],
     "additionalProperties": false
   },
   "POST /accounting/accounts": {
@@ -1237,20 +1253,10 @@
       },
       "type": {
         "type": "string",
-        "enum": [
-          "asset",
-          "liability",
-          "equity",
-          "income",
-          "expense"
-        ]
+        "enum": ["asset", "liability", "equity", "income", "expense"]
       }
     },
-    "required": [
-      "code",
-      "name",
-      "type"
-    ],
+    "required": ["code", "name", "type"],
     "additionalProperties": false
   },
   "POST /accounting/expenses": {
@@ -1281,12 +1287,7 @@
         "pattern": "^[a-f\\d]{24}$"
       }
     },
-    "required": [
-      "amount",
-      "category",
-      "memo",
-      "reference"
-    ],
+    "required": ["amount", "category", "memo", "reference"],
     "additionalProperties": false
   },
   "POST /accounting/fiscal-close": {
@@ -1298,9 +1299,7 @@
         "maximum": 2100
       }
     },
-    "required": [
-      "year"
-    ],
+    "required": ["year"],
     "additionalProperties": false
   },
   "POST /employees/{id}/advance": {
@@ -1312,9 +1311,7 @@
         "maximum": 1000000000
       }
     },
-    "required": [
-      "amount"
-    ],
+    "required": ["amount"],
     "additionalProperties": false
   },
   "POST /employees/{id}/salary": {
@@ -1339,10 +1336,7 @@
         ]
       }
     },
-    "required": [
-      "month",
-      "deduction"
-    ],
+    "required": ["month", "deduction"],
     "additionalProperties": false
   },
   "POST /records/employee": {
@@ -1364,10 +1358,7 @@
         "maximum": 1000000000
       }
     },
-    "required": [
-      "name",
-      "salary"
-    ],
+    "required": ["name", "salary"],
     "additionalProperties": false
   },
   "PATCH /records/employee/{id}": {

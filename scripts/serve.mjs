@@ -181,7 +181,7 @@ export function createFrontendServer({
           : "";
         res.setHeader(
           "Content-Security-Policy",
-          `default-src 'self'; script-src 'self' ${scripts.join(" ")}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ${connect}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`,
+          `default-src 'self'; script-src 'self' ${scripts.join(" ")}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ${connect}; object-src 'none'; frame-src 'self' blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`,
         );
       }
       res

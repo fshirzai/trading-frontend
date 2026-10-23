@@ -20,8 +20,8 @@ export const productName = (p, language = "en") =>
 export const date = (value) =>
   value
     ? new Date(value).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
+        day: "2-digit",
+        month: "2-digit",
         year: "numeric",
       })
     : "—";
@@ -60,5 +60,7 @@ export function label(key) {
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (s) => s.toUpperCase())
     .replace(/Cents$/, " (cents)")
-    .replace(/Id$/, " ID");
+    .replace(/Id$/, " ID")
+    .replace(/\s+/g, " ")
+    .trim();
 }

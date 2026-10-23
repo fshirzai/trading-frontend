@@ -36,3 +36,11 @@ test("five roles use scoped modules and only administrator sees system settings"
   for (const key of ["users", "accounting", "procurement", "audit"])
     assert.ok(!customer.includes(key));
 });
+
+test("software and invoice terminology uses familiar Pashto and Dari names", () => {
+  assert.equal(messages.ps.Dashboard, "ډاشبورډ");
+  assert.equal(messages.fa.Dashboard, "داشبورد");
+  assert.equal(messages.ps["Issue quotation"], "پروفارما جوړه کړئ");
+  assert.equal(messages.fa["Issue quotation"], "صدور پروفارما");
+  assert.ok(messages.ps["Bag Weight Kg"].includes("کیلوګرام"));
+});

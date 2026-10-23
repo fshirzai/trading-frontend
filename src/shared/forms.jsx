@@ -1,4 +1,7 @@
 "use client";
+import DocumentViewer from "../modules/documents/DocumentViewer.jsx";
+import QuotationEditor from "../modules/documents/QuotationEditor.jsx";
+import { Localized } from "./i18n.jsx";
 import { useEffect, useMemo, useState, useId } from "react";
 import contracts from "./contracts.json";
 import {
@@ -75,194 +78,200 @@ export function Fields({
   const { t } = usePreferences();
   const inputPrefix = useId();
   return (
-    <div className="fields">
-      {Object.entries(schema.properties || {}).map(([key, original]) => {
-        const f = normalizeField(original),
-          required = schema.required?.includes(key),
-          value = values[key],
-          change = (v) => onChange({ ...values, [key]: v }),
-          title = t(label(key));
-        if (f.type === "object")
+    <Localized>
+      <div className="fields">
+        {Object.entries(schema.properties || {}).map(([key, original]) => {
+          const f = normalizeField(original),
+            required = schema.required?.includes(key),
+            value = values[key],
+            change = (v) => onChange({ ...values, [key]: v }),
+            title = t(label(key));
+          if (f.type === "object")
+            return (
+              <fieldset key={key} className="span-all">
+                <legend>{title}</legend>
+                <Fields
+                  schema={f}
+                  values={value || {}}
+                  onChange={change}
+                  choices={choices}
+                  nextChoices={nextChoices}
+                  onLoadMore={onLoadMore}
+                  loadingChoices={loadingChoices}
+                  disabled={disabled}
+                />
+              </fieldset>
+            );
+          if (f.type === "array")
+            return (
+              <fieldset key={key} className="span-all">
+                <legend>{title}</legend>
+                {(value || []).map((row, i) => (
+                  <div className="array-row" key={i}>
+                    <Fields
+                      schema={f.items}
+                      values={row}
+                      onChange={(v) =>
+                        change(value.map((r, j) => (j === i ? v : r)))
+                      }
+                      choices={choices}
+                      nextChoices={nextChoices}
+                      onLoadMore={onLoadMore}
+                      loadingChoices={loadingChoices}
+                      disabled={disabled}
+                    />
+                    <Button
+                      type="button"
+                      className="subtle"
+                      disabled={disabled || value.length <= (f.minItems || 0)}
+                      onClick={() => change(value.filter((_, j) => j !== i))}
+                    >
+                      Remove line
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  className="secondary"
+                  disabled={
+                    disabled || (value || []).length >= (f.maxItems || 100)
+                  }
+                  onClick={() => change([...(value || []), defaults(f.items)])}
+                >
+                  Add line
+                </Button>
+              </fieldset>
+            );
+          if (f.type === "boolean")
+            return (
+              <label className="checkbox" key={key}>
+                <input
+                  type="checkbox"
+                  checked={value === true}
+                  onChange={(e) => change(e.target.checked)}
+                  disabled={disabled}
+                />
+                <span>{title}</span>
+              </label>
+            );
+          const common = {
+            id: `${inputPrefix}-${key}`,
+            value: value ?? "",
+            disabled,
+            required,
+            minLength: f.minLength,
+            maxLength: f.maxLength,
+            onChange: (e) => change(e.target.value),
+            autoComplete: /password/i.test(key)
+              ? /old|login/i.test(key)
+                ? "current-password"
+                : "new-password"
+              : "off",
+          };
+          const options = f.enum || choices[key];
+          const numeric = ["number", "integer"].includes(f.type);
+          const type = /password/i.test(key)
+            ? "password"
+            : key === "email"
+              ? "email"
+              : numeric
+                ? "number"
+                : f.format === "date"
+                  ? "date"
+                  : key === "month"
+                    ? "month"
+                    : "text";
           return (
-            <fieldset key={key} className="span-all">
-              <legend>{title}</legend>
-              <Fields
-                schema={f}
-                values={value || {}}
-                onChange={change}
-                choices={choices}
-                nextChoices={nextChoices}
-                onLoadMore={onLoadMore}
-                loadingChoices={loadingChoices}
-                disabled={disabled}
-              />
-            </fieldset>
-          );
-        if (f.type === "array")
-          return (
-            <fieldset key={key} className="span-all">
-              <legend>{title}</legend>
-              {(value || []).map((row, i) => (
-                <div className="array-row" key={i}>
-                  <Fields
-                    schema={f.items}
-                    values={row}
-                    onChange={(v) =>
-                      change(value.map((r, j) => (j === i ? v : r)))
+            <label
+              key={key}
+              className={f.maxLength > 500 || key === "csv" ? "span-all" : ""}
+            >
+              <span>
+                {title}
+                {required && <b className="required"> *</b>}
+              </span>
+              {key === "csv" && (
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  disabled={disabled}
+                  aria-label={t("Import CSV file")}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 90000) {
+                        e.target.setCustomValidity(
+                          "CSV must be smaller than 90 KB",
+                        );
+                        e.target.reportValidity();
+                        return;
+                      }
+                      e.target.setCustomValidity("");
+                      change(await file.text());
                     }
-                    choices={choices}
-                    nextChoices={nextChoices}
-                    onLoadMore={onLoadMore}
-                    loadingChoices={loadingChoices}
-                    disabled={disabled}
-                  />
-                  <Button
-                    type="button"
-                    className="subtle"
-                    disabled={disabled || value.length <= (f.minItems || 0)}
-                    onClick={() => change(value.filter((_, j) => j !== i))}
-                  >
-                    Remove line
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                className="secondary"
-                disabled={
-                  disabled || (value || []).length >= (f.maxItems || 100)
-                }
-                onClick={() => change([...(value || []), defaults(f.items)])}
-              >
-                Add line
-              </Button>
-            </fieldset>
-          );
-        if (f.type === "boolean")
-          return (
-            <label className="checkbox" key={key}>
-              <input
-                type="checkbox"
-                checked={value === true}
-                onChange={(e) => change(e.target.checked)}
-                disabled={disabled}
-              />
-              <span>{title}</span>
+                  }}
+                />
+              )}
+              {options ? (
+                <select {...common}>
+                  <option value="">{t("Choose an option")}</option>
+                  {options.map((v) => (
+                    <option key={v.value ?? v} value={v.value ?? v}>
+                      {t(v.label ?? v)}
+                    </option>
+                  ))}
+                </select>
+              ) : f.maxLength > 500 || key === "csv" ? (
+                <textarea {...common} rows={key === "csv" ? 8 : 3} />
+              ) : (
+                <input
+                  {...common}
+                  type={type}
+                  min={f.minimum ?? f.exclusiveMinimum}
+                  max={f.maximum}
+                  step={
+                    f.type === "integer"
+                      ? 1
+                      : /quantity|moq|Quantity/.test(key)
+                        ? 0.001
+                        : 0.01
+                  }
+                  pattern={f.pattern}
+                  dir={
+                    key === "email" || /code|token/i.test(key)
+                      ? "ltr"
+                      : undefined
+                  }
+                />
+              )}
+              {nextChoices[key] && (
+                <Button
+                  type="button"
+                  className="subtle small"
+                  disabled={disabled || loadingChoices[key]}
+                  onClick={() => onLoadMore(key)}
+                >
+                  Load more choices
+                </Button>
+              )}
+              <small>
+                {/Cents$/.test(key)
+                  ? "Integer cents: $10.00 = 1000"
+                  : /quantity|moq|Quantity/.test(key)
+                    ? "Product units • up to 3 decimal places"
+                    : /amount|Cost|Total|Fees|salary|deduction|Fee/.test(key)
+                      ? "USD • up to 2 decimal places"
+                      : key === "csv"
+                        ? "Header: date,reference,amount. Amount is signed USD."
+                        : key === "direct"
+                          ? ""
+                          : null}
+              </small>
             </label>
           );
-        const common = {
-          id: `${inputPrefix}-${key}`,
-          value: value ?? "",
-          disabled,
-          required,
-          minLength: f.minLength,
-          maxLength: f.maxLength,
-          onChange: (e) => change(e.target.value),
-          autoComplete: /password/i.test(key)
-            ? /old|login/i.test(key)
-              ? "current-password"
-              : "new-password"
-            : "off",
-        };
-        const options = f.enum || choices[key];
-        const numeric = ["number", "integer"].includes(f.type);
-        const type = /password/i.test(key)
-          ? "password"
-          : key === "email"
-            ? "email"
-            : numeric
-              ? "number"
-              : key === "month"
-                ? "month"
-                : "text";
-        return (
-          <label
-            key={key}
-            className={f.maxLength > 500 || key === "csv" ? "span-all" : ""}
-          >
-            <span>
-              {title}
-              {required && <b className="required"> *</b>}
-            </span>
-            {key === "csv" && (
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                disabled={disabled}
-                aria-label="Import CSV file"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    if (file.size > 90000) {
-                      e.target.setCustomValidity(
-                        "CSV must be smaller than 90 KB",
-                      );
-                      e.target.reportValidity();
-                      return;
-                    }
-                    e.target.setCustomValidity("");
-                    change(await file.text());
-                  }
-                }}
-              />
-            )}
-            {options ? (
-              <select {...common}>
-                <option value="">Choose {title.toLowerCase()}</option>
-                {options.map((v) => (
-                  <option key={v.value ?? v} value={v.value ?? v}>
-                    {t(v.label ?? v)}
-                  </option>
-                ))}
-              </select>
-            ) : f.maxLength > 500 || key === "csv" ? (
-              <textarea {...common} rows={key === "csv" ? 8 : 3} />
-            ) : (
-              <input
-                {...common}
-                type={type}
-                min={f.minimum ?? f.exclusiveMinimum}
-                max={f.maximum}
-                step={
-                  f.type === "integer"
-                    ? 1
-                    : /quantity|moq|Quantity/.test(key)
-                      ? 0.001
-                      : 0.01
-                }
-                pattern={f.pattern}
-                dir={
-                  key === "email" || /code|token/i.test(key) ? "ltr" : undefined
-                }
-              />
-            )}
-            {nextChoices[key] && (
-              <Button
-                type="button"
-                className="subtle small"
-                disabled={disabled || loadingChoices[key]}
-                onClick={() => onLoadMore(key)}
-              >
-                Load more choices
-              </Button>
-            )}
-            <small>
-              {/Cents$/.test(key)
-                ? "Integer cents: $10.00 = 1000"
-                : /quantity|moq|Quantity/.test(key)
-                  ? "Product units • up to 3 decimal places"
-                  : /amount|Cost|Total|Fees|salary|deduction|Fee/.test(key)
-                    ? "USD • up to 2 decimal places"
-                    : key === "csv"
-                      ? "Header: date,reference,amount. Amount is signed USD."
-                      : key === "direct"
-                        ? ""
-                        : null}
-            </small>
-          </label>
-        );
-      })}
-    </div>
+        })}
+      </div>
+    </Localized>
   );
 }
 export function CommandForm({ command, api, user, onClose, onDone }) {
@@ -300,6 +309,8 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(null),
     [result, setResult] = useState(null),
+    [preview, setPreview] = useState(null),
+    [savedDocument, setSavedDocument] = useState(null),
     [choices, setChoices] = useState({}),
     [choiceCursors, setChoiceCursors] = useState({}),
     [loadingChoices, setLoadingChoices] = useState({}),
@@ -340,7 +351,7 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
                   ? x.name
                   : recordId(x),
                 label:
-                  (productName(x) ||
+                  (productName(x, language) ||
                     x.code ||
                     x.memo ||
                     x.reference ||
@@ -416,8 +427,11 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
         .map((x) => ({
           value: ["account", "category"].includes(k) ? x.name : recordId(x),
           label:
-            (productName(x) || x.code || x.memo || x.reference || shortId(x)) +
-            (x.quantity ? " · " + x.quantity + " t" : ""),
+            (productName(x, language) ||
+              x.code ||
+              x.memo ||
+              x.reference ||
+              shortId(x)) + (x.quantity ? " · " + x.quantity + " t" : ""),
         }));
       setChoices((v) => ({ ...v, [k]: [...(v[k] || []), ...items] }));
       setChoiceCursors((v) => ({ ...v, [k]: r.nextCursor || null }));
@@ -427,12 +441,34 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
       setLoadingChoices((v) => ({ ...v, [k]: false }));
     }
   }
+  if (savedDocument)
+    return (
+      <DocumentViewer api={api} document={savedDocument} onClose={onClose} />
+    );
   if (!schema)
     return (
-      <Modal title={command.title} onClose={onClose}>
-        <ErrorBox error={Error("This action has no backend contract.")} />
-      </Modal>
+      <Localized>
+        <Modal title={command.title} onClose={onClose}>
+          <ErrorBox error={Error("This action has no backend contract.")} />
+        </Modal>
+      </Localized>
     );
+  const isQuotation = /\/(proforma|revise)$/.test(command.path);
+  async function previewDraft(e) {
+    const form = e.currentTarget.closest("form");
+    if (!form.reportValidity()) return;
+    if (command.path.includes("{id}") && !/^[a-f\d]{24}$/i.test(target)) {
+      setError(Error("A valid record ID is required"));
+      return;
+    }
+    setPreview({
+      path: command.path.replace("{id}", target) + "/preview",
+      body: formBody(schema, values),
+      title: "Proforma preview",
+      name: "draft-proforma.pdf",
+      draft: true,
+    });
+  }
   async function submit(e) {
     e.preventDefault();
     setError(null);
@@ -479,7 +515,14 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
         window.location.assign(safe);
         return;
       }
-      if (out?.secret || out?.recoveryCodes) {
+      if (isQuotation && out?._id) {
+        onDone?.(out, false);
+        setSavedDocument({
+          path: `/orders/${out._id}/documents/proforma.pdf`,
+          title: "Proforma invoice",
+          name: `proforma-${out._id}.pdf`,
+        });
+      } else if (out?.secret || out?.recoveryCodes) {
         setResult(out);
         onDone?.(out, false);
       } else {
@@ -493,185 +536,210 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
     }
   }
   return (
-    <Modal title={command.title} onClose={() => !busy && onClose()}>
-      {result ? (
-        <div className="form-body">
-          <p className="notice">
-            Save these credentials securely. They are shown only for this
-            enrollment.
-          </p>
-          {result.secret && (
-            <>
-              <label>
-                Authenticator secret
-                <input readOnly value={result.secret} dir="ltr" />
-              </label>
-              <p>
-                Enter this secret in your authenticator, then use “Confirm
-                authenticator” with its six-digit code.
-              </p>
-            </>
-          )}
-          {result.recoveryCodes && (
-            <>
-              <p>Your recovery codes (each can be used once):</p>
-              <div className="recovery-codes">
-                {result.recoveryCodes.map((c) => (
-                  <code key={c}>{c}</code>
-                ))}
-              </div>
-              <p>
-                Your sessions were revoked. Sign in again with your
-                authenticator.
-              </p>
-            </>
-          )}
-          <Button onClick={onClose}>Done</Button>
-        </div>
-      ) : (
-        <form onSubmit={submit}>
+    <Localized>
+      <Modal title={command.title} onClose={() => !busy && onClose()}>
+        {result ? (
           <div className="form-body">
-            {command.path.includes("{id}") && !command.id && (
-              <label>
-                <span>Record ID *</span>
-                <input
-                  required
-                  pattern="[a-fA-F0-9]{24}"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                />
-              </label>
+            <p className="notice">
+              Save these credentials securely. They are shown only for this
+              enrollment.
+            </p>
+            {result.secret && (
+              <>
+                <label>
+                  Authenticator secret
+                  <input readOnly value={result.secret} dir="ltr" />
+                </label>
+                <p>
+                  Enter this secret in your authenticator, then use “Confirm
+                  authenticator” with its six-digit code.
+                </p>
+              </>
             )}
-            {/returns$/.test(command.path) && (
-              <p className="notice">
-                Before dispatch: refund of payments received. After dispatch:
-                25% of the total order is retained. Returns after handover must
-                be requested within the order’s stated return window and pass
-                inspection.
-              </p>
-            )}
-            {/shipments$/.test(command.path) && (
-              <p className="notice">
-                For deliveries added after the deal, record the additional fee
-                and customer acceptance. Direct shipments require a source
-                border and direct cost.
-              </p>
-            )}
-            {/verify$/.test(command.path) && (
-              <p className="notice">
-                Confirm funds actually reached the company bank account. A
-                receipt alone does not confirm payment.
-              </p>
-            )}
-            {/accept$/.test(command.path) && (
-              <p className="notice">
-                Submitting accepts the quotation, its delivery fees, border
-                handover point, split-delivery terms, and return policy.
-              </p>
-            )}
-            {values.productTotal !== undefined && (
-              <div className="form-summary">
-                <div>
-                  <span>Total quotation</span>
-                  <b>
-                    {money(
-                      Math.round(
-                        (Number(values.productTotal || 0) +
-                          Number(values.deliveryFees || 0)) *
-                          100,
-                      ),
-                    )}
-                  </b>
+            {result.recoveryCodes && (
+              <>
+                <p>Your recovery codes (each can be used once):</p>
+                <div className="recovery-codes">
+                  {result.recoveryCodes.map((c) => (
+                    <code key={c}>{c}</code>
+                  ))}
                 </div>
-                <div>
-                  <span>50% before dispatch</span>
-                  <b>
-                    {money(
-                      Math.round(
-                        (Number(values.productTotal || 0) +
-                          Number(values.deliveryFees || 0)) *
-                          50,
-                      ),
-                    )}
-                  </b>
-                </div>
-              </div>
+                <p>
+                  Your sessions were revoked. Sign in again with your
+                  authenticator.
+                </p>
+              </>
             )}
-            {values.lines && (
-              <div
-                className={`journal-balance ${journalTotals(values.lines).debit === journalTotals(values.lines).credit ? "balanced" : ""}`}
-              >
-                <span>
-                  Debits{" "}
-                  <strong>{money(journalTotals(values.lines).debit)}</strong>
-                </span>
-                <span>
-                  Credits{" "}
-                  <strong>{money(journalTotals(values.lines).credit)}</strong>
-                </span>
-                <span>
-                  {journalTotals(values.lines).debit ===
-                  journalTotals(values.lines).credit
-                    ? "Balanced"
-                    : "Not balanced"}
-                </span>
-              </div>
-            )}
-            {command.context && (
-              <p className="notice">
-                {productName(command.context) ||
-                  command.context.name ||
-                  command.context.reference ||
-                  "Record #" + shortId(command.context)}
-                {command.context.refundCents !== undefined && (
-                  <>
-                    {" "}
-                    · Confirmed refund:{" "}
-                    <b>{money(command.context.refundCents)}</b>
-                  </>
-                )}
-              </p>
-            )}
-            <Fields
-              schema={schema}
-              values={values}
-              onChange={(v) =>
-                setValues(
-                  v.items?.length
-                    ? {
-                        ...v,
-                        productTotal: v.items.reduce(
-                          (n, i) => n + Number(i.productTotal || 0),
-                          0,
-                        ),
-                      }
-                    : v,
-                )
-              }
-              choices={choices}
-              nextChoices={choiceCursors}
-              onLoadMore={loadChoices}
-              loadingChoices={loadingChoices}
-              disabled={busy}
-            />
-            <ErrorBox error={error} />
+            <Button onClick={onClose}>Done</Button>
           </div>
-          <footer>
-            <Button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={onClose}
-            >
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" disabled={busy}>
-              {busy ? t("Loading…") : t(command.title)}
-            </Button>
-          </footer>
-        </form>
-      )}
-    </Modal>
+        ) : (
+          <form onSubmit={submit}>
+            <div className="form-body">
+              {command.path.includes("{id}") && !command.id && (
+                <label>
+                  <span>Record ID *</span>
+                  <input
+                    required
+                    pattern="[a-fA-F0-9]{24}"
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
+                  />
+                </label>
+              )}
+              {/returns$/.test(command.path) && (
+                <p className="notice">
+                  Before dispatch: refund of payments received. After dispatch:
+                  25% of the total order is retained. Returns after handover
+                  must be requested within the order’s stated return window and
+                  pass inspection.
+                </p>
+              )}
+              {/shipments$/.test(command.path) && (
+                <p className="notice">
+                  For deliveries added after the deal, record the additional fee
+                  and customer acceptance. Direct shipments require a source
+                  border and direct cost.
+                </p>
+              )}
+              {/verify$/.test(command.path) && (
+                <p className="notice">
+                  Confirm funds actually reached the company bank account. A
+                  receipt alone does not confirm payment.
+                </p>
+              )}
+              {/accept$/.test(command.path) && (
+                <p className="notice">
+                  Submitting accepts the quotation, its delivery fees, border
+                  handover point, split-delivery terms, and return policy.
+                </p>
+              )}
+              {values.productTotal !== undefined && (
+                <div className="form-summary">
+                  <div>
+                    <span>Total quotation</span>
+                    <b>
+                      {money(
+                        Math.round(
+                          (Number(values.productTotal || 0) +
+                            Number(values.deliveryFees || 0)) *
+                            100,
+                        ),
+                      )}
+                    </b>
+                  </div>
+                  <div>
+                    <span>50% before dispatch</span>
+                    <b>
+                      {money(Math.round(Number(values.productTotal || 0) * 50))}
+                    </b>
+                  </div>
+                </div>
+              )}
+              {values.lines && (
+                <div
+                  className={`journal-balance ${journalTotals(values.lines).debit === journalTotals(values.lines).credit ? "balanced" : ""}`}
+                >
+                  <span>
+                    Debits{" "}
+                    <strong>{money(journalTotals(values.lines).debit)}</strong>
+                  </span>
+                  <span>
+                    Credits{" "}
+                    <strong>{money(journalTotals(values.lines).credit)}</strong>
+                  </span>
+                  <span>
+                    {journalTotals(values.lines).debit ===
+                    journalTotals(values.lines).credit
+                      ? "Balanced"
+                      : "Not balanced"}
+                  </span>
+                </div>
+              )}
+              {command.context && (
+                <p className="notice">
+                  {productName(command.context, language) ||
+                    command.context.name ||
+                    command.context.reference ||
+                    "Record #" + shortId(command.context)}
+                  {command.context.refundCents !== undefined && (
+                    <>
+                      {" "}
+                      · Confirmed refund:{" "}
+                      <b>{money(command.context.refundCents)}</b>
+                    </>
+                  )}
+                </p>
+              )}
+              <EditorFields
+                quotation={isQuotation}
+                schema={schema}
+                values={values}
+                onChange={(v) =>
+                  setValues(
+                    v.items?.length
+                      ? {
+                          ...v,
+                          productTotal: v.items.reduce(
+                            (n, i) => n + Number(i.productTotal || 0),
+                            0,
+                          ),
+                        }
+                      : v,
+                  )
+                }
+                choices={choices}
+                nextChoices={choiceCursors}
+                onLoadMore={loadChoices}
+                loadingChoices={loadingChoices}
+                disabled={busy}
+              />
+              <ErrorBox error={error} />
+            </div>
+            <footer>
+              <Button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={onClose}
+              >
+                {t("Cancel")}
+              </Button>
+              {isQuotation && (
+                <Button
+                  type="button"
+                  className="secondary"
+                  disabled={busy}
+                  onClick={previewDraft}
+                >
+                  {t("Preview document")}
+                </Button>
+              )}
+              <Button type="submit" disabled={busy}>
+                {busy ? t("Loading…") : t(command.title)}
+              </Button>
+            </footer>
+          </form>
+        )}
+        {preview && (
+          <DocumentViewer
+            api={api}
+            document={preview}
+            onClose={() => setPreview(null)}
+          />
+        )}
+      </Modal>
+    </Localized>
+  );
+}
+
+function EditorFields({ quotation, ...props }) {
+  return quotation ? (
+    <QuotationEditor
+      {...props}
+      renderFields={(fields) => <Fields {...fields} />}
+    />
+  ) : (
+    <Fields {...props} />
   );
 }
 

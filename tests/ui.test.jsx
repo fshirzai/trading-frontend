@@ -890,3 +890,329 @@ test("administrator demo-data panel submits explicit credentials and shows all r
   for (const a of accounts) assert.ok(screen.getByText(a.email));
   assert.equal(screen.queryByLabelText("Administrator password"), null);
 });
+
+test("staff quotation form submits packaging and reference fields with numeric bag values", async () => {
+  let submitted;
+  const api = {
+    request: async (path, options) => {
+      if (options?.method === "POST") {
+        submitted = options.body;
+        return { _id: id };
+      }
+      return {
+        items: [{ _id: id, name: { en: "Beans" }, active: true }],
+        nextCursor: null,
+      };
+    },
+  };
+  mount(
+    <CommandForm
+      api={api}
+      user={{ role: "manager" }}
+      command={{
+        title: "Issue quotation",
+        path: "/inquiries/{id}/proforma",
+        id,
+        method: "POST",
+        initial: {
+          items: [{ product: id, quantity: 25, productTotal: 22000 }],
+          productTotal: 22000,
+          deliveryFees: 100,
+          border: "Ghazni customs",
+          quotationDetails: {
+            reference: "PI-UI-001",
+            issueDate: "2026-10-23",
+            validUntil: "2026-10-31",
+          },
+        },
+      }}
+      onClose={() => {}}
+      onDone={() => {}}
+    />,
+  );
+  await screen.findByLabelText("Bag Count");
+  assert.ok(screen.getByText("$11,000.00"));
+  fireEvent.change(screen.getByLabelText("Bag Count"), {
+    target: { value: "1000" },
+  });
+  fireEvent.change(screen.getByLabelText("Bag Weight Kg"), {
+    target: { value: "25" },
+  });
+  fireEvent.change(screen.getByLabelText("Packaging"), {
+    target: { value: "25 kg woven bags" },
+  });
+  fireEvent.change(screen.getByLabelText("Loading Place"), {
+    target: { value: "Ghazni" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Issue quotation", exact: true }),
+  );
+  await waitFor(() => assert.ok(submitted));
+  assert.equal(submitted.items[0].bagCount, 1000);
+  assert.equal(submitted.items[0].bagWeightKg, 25);
+  assert.equal(submitted.items[0].packaging, "25 kg woven bags");
+  assert.equal(submitted.quotationDetails.reference, "PI-UI-001");
+  assert.equal(submitted.quotationDetails.loadingPlace, "Ghazni");
+});
+
+test("Pashto localization handles multiline text, software terms, placeholders and statuses", async () => {
+  const { Localized, usePreferences } = await import("../src/shared/i18n.jsx");
+  const { Button, Badge } = await import("../src/shared/ui.jsx");
+  localStorage.setItem(
+    "trade-preferences",
+    JSON.stringify({
+      language: "ps",
+      mode: "light",
+      color: "emerald",
+      density: "comfortable",
+    }),
+  );
+  function Example() {
+    const { t } = usePreferences();
+    return (
+      <Localized>
+        <h1>{t("Dashboard")}</h1>
+        <p>
+          These details are saved with new quotations and shown on customer
+          documents. They are not published on public pages.
+        </p>
+        <Button>Download</Button>
+        <Badge>Open</Badge>
+        <span>{t("{hours} hours after first handover", { hours: 24 })}</span>
+      </Localized>
+    );
+  }
+  mount(<Example />);
+  await screen.findByRole("heading", { name: "ډاشبورډ" });
+  assert.ok(screen.getByRole("button", { name: "ډاونلوډ" }));
+  assert.ok(screen.getByText("پرانیستی"));
+  assert.ok(screen.getByText("له لومړۍ سپارنې وروسته 24 ساعته"));
+  assert.ok(
+    screen.getByText(
+      "دا معلومات له نوې پروفارما سره ساتل کېږي او د پېرودونکي په اسنادو کې ښودل کېږي. په عامو پاڼو کې نه خپرېږي.",
+    ),
+  );
+});
+
+test("public photo response cannot erase the administrator's private invoice profile", async () => {
+  const profile = {
+    bankName: "Saved bank",
+    accountNumber: "PRIVATE-TEST-ACCOUNT",
+  };
+  let saved;
+  const api = {
+    request: async (path, opts) => {
+      if (path === "/admin/settings/photos")
+        return {
+          ...defaultBranding,
+          revision: 2,
+          aboutImages: [
+            ...defaultBranding.aboutImages,
+            { id: "a".repeat(24), alt: "Company photo" },
+          ],
+        };
+      if (path === "/admin/settings" && opts?.method === "PATCH") {
+        saved = opts.body;
+        return { ...defaultBranding, ...saved, revision: 3 };
+      }
+      if (path === "/admin/settings")
+        return { ...defaultBranding, revision: 1, invoiceProfile: profile };
+      return { enabled: false, seeded: false };
+    },
+  };
+  mount(<SystemSettings api={api} user={{ role: "admin" }} />);
+  await waitFor(() =>
+    assert.equal(screen.getByLabelText("Bank name").value, "Saved bank"),
+  );
+  const file = new dom.window.File(["fixture"], "photo.png", {
+    type: "image/png",
+  });
+  fireEvent.change(screen.getByLabelText("Upload About photo"), {
+    target: { files: [file] },
+  });
+  await screen.findByText("System settings saved.");
+  assert.equal(screen.getByLabelText("Bank name").value, "Saved bank");
+  fireEvent.change(screen.getByLabelText("System / company name"), {
+    target: { value: "Updated exporter" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Save system settings", exact: true }),
+  );
+  await waitFor(() => assert.ok(saved));
+  assert.deepEqual(saved.invoiceProfile, profile);
+});
+
+test("proforma editor previews without saving then shows saved document with print and download", async () => {
+  const calls = [],
+    done = [];
+  const api = {
+    request: async (path, options = {}) => {
+      calls.push([path, options]);
+      if (options.blob)
+        return new Blob(["%PDF-fixture"], { type: "application/pdf" });
+      if (path.endsWith("/proforma")) return { _id: id };
+      return {
+        items: [{ _id: id, name: { en: "Beans" }, active: true }],
+        nextCursor: null,
+      };
+    },
+  };
+  const view = mount(
+    <CommandForm
+      api={api}
+      user={{ role: "manager" }}
+      command={{
+        title: "Issue quotation",
+        path: "/inquiries/{id}/proforma",
+        method: "POST",
+        id,
+        initial: {
+          items: [
+            {
+              product: id,
+              quantity: 25,
+              productTotal: 22000,
+              packaging: "25 kg bags",
+              bagCount: 1000,
+              bagWeightKg: 25,
+            },
+          ],
+          productTotal: 22000,
+          deliveryFees: 100,
+          border: "Ghazni customs",
+          quotationDetails: {
+            reference: "PI-UI-PREVIEW",
+            issueDate: "2026-10-23",
+          },
+        },
+      }}
+      onClose={() => {}}
+      onDone={(...args) => done.push(args)}
+    />,
+  );
+  await screen.findByLabelText("Bag Count");
+  assert.ok(screen.getByRole("heading", { name: "Goods and packaging" }));
+  fireEvent.click(screen.getByRole("button", { name: "Preview document" }));
+  await screen.findByTitle("Proforma preview");
+  assert.equal(calls.filter(([p]) => p.endsWith("/proforma")).length, 0);
+  const previewCall = calls.find(([p]) => p.endsWith("/proforma/preview"));
+  assert.equal(previewCall[1].method, "POST");
+  assert.equal(previewCall[1].body.items[0].bagCount, 1000);
+  assert.equal(previewCall[1].blob, true);
+  assert.match(
+    screen.getByRole("link", { name: "Download PDF" }).getAttribute("href"),
+    /^blob:/,
+  );
+  fireEvent.click(screen.getAllByRole("button", { name: "Close" }).at(-1));
+  assert.equal(screen.queryByTitle("Proforma preview"), null);
+  assert.equal(screen.getByLabelText("Bag Count").value, "1000");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Issue quotation", exact: true }),
+  );
+  const iframe = await screen.findByTitle("Proforma invoice");
+  assert.equal(done.length, 1);
+  assert.equal(done[0][1], false);
+  assert.equal(calls.filter(([p]) => p.endsWith("/proforma")).length, 1);
+  assert.ok(
+    calls.some(
+      ([p, options]) =>
+        p === `/orders/${id}/documents/proforma.pdf` && options.blob,
+    ),
+  );
+  assert.equal(
+    screen.getByRole("link", { name: "Download PDF" }).download,
+    `proforma-${id}.pdf`,
+  );
+  let prints = 0;
+  iframe.contentWindow.focus = () => {};
+  iframe.contentWindow.print = () => {
+    prints++;
+  };
+  fireEvent.load(iframe);
+  fireEvent.click(screen.getByRole("button", { name: "Print" }));
+  assert.equal(prints, 1);
+  assert.equal(view.container.querySelectorAll("form").length, 0);
+});
+
+test("document viewer retries authenticated loading and releases its private object URL on close", async () => {
+  const { default: DocumentViewer } =
+    await import("../src/modules/documents/DocumentViewer.jsx");
+  const priorCreate = URL.createObjectURL,
+    priorRevoke = URL.revokeObjectURL;
+  const revoked = [];
+  URL.createObjectURL = () => "blob:private-invoice";
+  URL.revokeObjectURL = (value) => revoked.push(value);
+  try {
+    let attempts = 0;
+    const api = {
+      request: async (path, options) => {
+        assert.equal(path, `/invoices/${id}/pdf`);
+        assert.equal(options.blob, true);
+        if (++attempts === 1) throw Error("Temporary failure");
+        return new Blob(["%PDF-private"], { type: "application/pdf" });
+      },
+    };
+    const view = mount(
+      <DocumentViewer
+        api={api}
+        document={{
+          path: `/invoices/${id}/pdf`,
+          title: "Commercial invoice",
+          name: "INV-test.pdf",
+        }}
+        onClose={() => {}}
+      />,
+    );
+    await screen.findByText("Temporary failure");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await screen.findByTitle("Commercial invoice");
+    assert.equal(
+      screen.getByRole("link", { name: "Download PDF" }).getAttribute("href"),
+      "blob:private-invoice",
+    );
+    assert.equal(
+      screen.getByRole("link", { name: "Open in new tab" }).getAttribute("rel"),
+      "noopener noreferrer",
+    );
+    view.unmount();
+    assert.deepEqual(revoked, ["blob:private-invoice"]);
+  } finally {
+    URL.createObjectURL = priorCreate;
+    URL.revokeObjectURL = priorRevoke;
+  }
+});
+
+test("customer document controls open issued invoice without exposing invoice issue action", async () => {
+  const { default: OrderDocuments } =
+    await import("../src/modules/documents/OrderDocuments.jsx");
+  const calls = [];
+  mount(
+    <OrderDocuments
+      api={{
+        request: async (path, options) => {
+          calls.push(path);
+          return options?.blob
+            ? new Blob(["%PDF-invoice"], { type: "application/pdf" })
+            : { items: [], nextCursor: null };
+        },
+      }}
+      id={id}
+      user={{ role: "customer" }}
+      onCommand={() => {
+        throw Error("Customer may not issue invoices");
+      }}
+      accepted
+      invoices={[{ _id: id, number: "INV-CUSTOMER" }]}
+    />,
+  );
+  assert.equal(screen.queryByRole("button", { name: "Issue invoice" }), null);
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "View / print invoice" })[0],
+  );
+  await screen.findByTitle("Commercial invoice");
+  assert.ok(calls.includes(`/invoices/${id}/pdf`));
+  assert.equal(
+    screen.getByRole("link", { name: "Download PDF" }).download,
+    "INV-CUSTOMER.pdf",
+  );
+});

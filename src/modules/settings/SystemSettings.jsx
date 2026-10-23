@@ -10,6 +10,17 @@ import {
   publicAsset,
   useBranding,
 } from "./BrandingProvider.jsx";
+const invoiceFields = [
+  ["registrationNo", "Company registration number", 100],
+  ["taxNo", "Tax / TIN number", 100],
+  ["bankName", "Bank name", 200],
+  ["accountName", "Bank account name", 200],
+  ["accountNumber", "Account number / IBAN", 120],
+  ["swiftCode", "SWIFT code", 80],
+  ["paymentInstructions", "Bank payment instructions", 1000],
+  ["signatoryName", "Authorized signatory name", 200],
+  ["signatoryPosition", "Signatory position", 120],
+];
 const fields = [
   ["name", "System / company name", 120],
   ["tagline", "Tagline", 240],
@@ -56,7 +67,9 @@ export default function SystemSettings({ api, user }) {
     );
   const dirty =
     saved &&
-    (fields.some(([k]) => form[k] !== (saved[k] ?? defaultBranding[k])) ||
+    (JSON.stringify(form.invoiceProfile || {}) !==
+      JSON.stringify(saved.invoiceProfile || {}) ||
+      fields.some(([k]) => form[k] !== (saved[k] ?? defaultBranding[k])) ||
       JSON.stringify(form.translations) !==
         JSON.stringify(saved.translations ?? defaultBranding.translations) ||
       JSON.stringify(form.aboutImages) !==
@@ -66,10 +79,15 @@ export default function SystemSettings({ api, user }) {
     setError(null);
     setMessage("");
     try {
-      const s = await task();
+      const result = await task();
+      const s = {
+        ...result,
+        invoiceProfile: result.invoiceProfile ?? saved?.invoiceProfile ?? {},
+      };
       setSaved(s);
       setForm({ ...defaultBranding, ...s });
-      updateBranding(s);
+      const { invoiceProfile, ...publicBranding } = s;
+      updateBranding(publicBranding);
       setMessage("System settings saved.");
     } catch (e) {
       setError(e);
@@ -84,6 +102,7 @@ export default function SystemSettings({ api, user }) {
         method: "PATCH",
         body: {
           revision: saved.revision,
+          invoiceProfile: form.invoiceProfile || {},
           translations: form.translations,
           aboutImages: form.aboutImages,
           ...Object.fromEntries(fields.map(([k]) => [k, form[k]])),
@@ -356,6 +375,55 @@ export default function SystemSettings({ api, user }) {
               </section>
             ))}
           </details>
+          <fieldset className="span-all">
+            <legend>{t("Invoice seller and bank details")}</legend>
+            <p>
+              {t(
+                "These details are saved with new quotations and shown on customer documents. They are not published on public pages.",
+              )}
+            </p>
+            <div className="fields">
+              {invoiceFields.map(([key, title, max]) => (
+                <label key={key} className={max > 500 ? "span-all" : ""}>
+                  <span>{t(title)}</span>
+                  {max > 500 ? (
+                    <textarea
+                      aria-label={t(title)}
+                      maxLength={max}
+                      rows={3}
+                      value={form.invoiceProfile?.[key] || ""}
+                      disabled={busy || !saved}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          invoiceProfile: {
+                            ...form.invoiceProfile,
+                            [key]: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  ) : (
+                    <input
+                      aria-label={t(title)}
+                      maxLength={max}
+                      value={form.invoiceProfile?.[key] || ""}
+                      disabled={busy || !saved}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          invoiceProfile: {
+                            ...form.invoiceProfile,
+                            [key]: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  )}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="button-row">
             <Button disabled={busy || !saved || !dirty} type="submit">
               Save system settings

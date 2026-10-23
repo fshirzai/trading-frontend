@@ -57,7 +57,7 @@ export default function DataTable({
       <table>
         <thead>
           <tr>
-            <th>Reference</th>
+            <th>{t("Reference")}</th>
             {columns.map((c) => (
               <th key={c}>{t(label(c).replace(" (cents)", ""))}</th>
             ))}
@@ -115,7 +115,9 @@ export default function DataTable({
                     )}
                     {rowActions.length > 0 && (
                       <select
-                        aria-label={`Actions for ${shortId(item)}`}
+                        aria-label={t("Actions for {reference}", {
+                          reference: shortId(item),
+                        })}
                         value=""
                         onChange={(e) => {
                           const action = rowActions[Number(e.target.value)];

@@ -1,4 +1,5 @@
 "use client";
+import { Localized } from "../../shared/i18n.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox } from "../../shared/ui.jsx";
 import { recordId } from "../../shared/format.js";
@@ -119,46 +120,48 @@ export default function ProductVideo({
     }
   }
   return (
-    <section className="detail-section">
-      <h3>Product video</h3>
-      {product.video && (!privatePreview || privateUrl) ? (
-        <video
-          key={String(product.video)}
-          controls
-          preload="metadata"
-          style={{ width: "100%", maxHeight: 360, borderRadius: 12 }}
-          src={
-            privatePreview
-              ? privateUrl
-              : `${process.env.NEXT_PUBLIC_API_URL || "/api"}/catalog/${recordId(product)}/video`
-          }
-        />
-      ) : (
-        <p className="muted">
-          {product.video
-            ? "Loading private video preview..."
-            : "No video uploaded."}
-        </p>
-      )}
-      {editable && (
-        <div className="button-row">
-          <label>
-            Upload or replace one video (MP4/WebM, max 30 MiB)
-            <input
-              aria-label="Product video"
-              type="file"
-              accept="video/mp4,video/webm"
-              onChange={upload}
-              disabled={busy}
-            />
-          </label>
-          <Button disabled={busy} className="secondary" onClick={remove}>
-            Remove video / unfinished uploads
-          </Button>
-        </div>
-      )}
-      {busy && <p role="status">Uploading: {progress}%</p>}
-      <ErrorBox error={error || previewError} />
-    </section>
+    <Localized>
+      <section className="detail-section">
+        <h3>Product video</h3>
+        {product.video && (!privatePreview || privateUrl) ? (
+          <video
+            key={String(product.video)}
+            controls
+            preload="metadata"
+            style={{ width: "100%", maxHeight: 360, borderRadius: 12 }}
+            src={
+              privatePreview
+                ? privateUrl
+                : `${process.env.NEXT_PUBLIC_API_URL || "/api"}/catalog/${recordId(product)}/video`
+            }
+          />
+        ) : (
+          <p className="muted">
+            {product.video
+              ? "Loading private video preview..."
+              : "No video uploaded."}
+          </p>
+        )}
+        {editable && (
+          <div className="button-row">
+            <label>
+              Upload or replace one video (MP4/WebM, max 30 MiB)
+              <input
+                aria-label="Product video"
+                type="file"
+                accept="video/mp4,video/webm"
+                onChange={upload}
+                disabled={busy}
+              />
+            </label>
+            <Button disabled={busy} className="secondary" onClick={remove}>
+              Remove video / unfinished uploads
+            </Button>
+          </div>
+        )}
+        {busy && <p role="status">Uploading: {progress}%</p>}
+        <ErrorBox error={error || previewError} />
+      </section>
+    </Localized>
   );
 }

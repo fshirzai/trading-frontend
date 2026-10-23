@@ -7,37 +7,44 @@ import {
 import Icon from "./icons.jsx";
 import { usePreferences } from "./i18n.jsx";
 export function Button({ children, icon, className = "", ...props }) {
+  const t = usePreferences()?.t || ((v) => v);
   return (
     <button className={`button ${className}`} {...props}>
       {icon && <Icon name={icon} />}
-      <span>{children}</span>
+      <span>{typeof children === "string" ? t(children) : children}</span>
     </button>
   );
 }
 export function Badge({ children }) {
+  const t = usePreferences()?.t || ((v) => v);
   const s = String(children || "");
   return (
     <span
       className={`badge ${/Verified|Completed|Delivered|Clean|Closed|Active|Paid|Received/i.test(s) ? "success" : /Rejected|Failed|Inactive/i.test(s) ? "danger" : "pending"}`}
     >
-      {s}
+      {t(s === "Open" || s === t("Open") ? "Open status" : s)}
     </span>
   );
 }
 export function ErrorBox({ error }) {
+  const t = usePreferences()?.t || ((v) => v);
   return error ? (
     <div className="error" role="alert">
-      <strong>{error.message || String(error)}</strong>
+      <strong>{t(error.message || String(error))}</strong>
       {Array.isArray(error.details) && (
         <ul>
           {error.details.map((d, i) => (
             <li key={i}>
-              {d.field}: {d.message}
+              {t(d.field)}: {t(d.message)}
             </li>
           ))}
         </ul>
       )}
-      {error.requestId && <small>Reference: {error.requestId}</small>}
+      {error.requestId && (
+        <small>
+          {t("Reference")}: <bdi>{error.requestId}</bdi>
+        </small>
+      )}
     </div>
   ) : null;
 }
@@ -52,7 +59,7 @@ export function Empty({
         <Icon name="box" size={30} />
       </div>
       <h3>{t(title)}</h3>
-      <p>{text}</p>
+      <p>{t(text)}</p>
     </div>
   );
 }
@@ -101,7 +108,7 @@ export function PreferencesControls() {
   return (
     <div className="preferences">
       <select
-        aria-label="Language"
+        aria-label={t("Language")}
         value={language}
         onChange={(e) => setLanguage(e.target.value)}
       >
@@ -111,7 +118,7 @@ export function PreferencesControls() {
       </select>
       <select
         className="appearance-mode"
-        aria-label="Appearance mode"
+        aria-label={t("Appearance mode")}
         value={mode}
         onChange={(e) => setMode(e.target.value)}
       >
@@ -121,7 +128,7 @@ export function PreferencesControls() {
       </select>
       <select
         className="color-theme"
-        aria-label="Color theme"
+        aria-label={t("Color theme")}
         value={color}
         onChange={(e) => setColor(e.target.value)}
       >
@@ -136,6 +143,7 @@ export function PreferencesControls() {
 }
 export function Logo({ compact = false }) {
   const { branding } = useBranding();
+  const t = usePreferences()?.t || ((v) => v);
   return (
     <div className="logo">
       <span className="logo-mark">
@@ -151,8 +159,8 @@ export function Logo({ compact = false }) {
       {!compact && (
         <span className="logo-name">
           {branding.name}
-          <span className="logo-sub" title={branding.tagline}>
-            {branding.tagline}
+          <span className="logo-sub" title={t(branding.tagline)}>
+            {t(branding.tagline)}
           </span>
         </span>
       )}

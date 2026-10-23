@@ -1,4 +1,5 @@
 "use client";
+import { Localized } from "./shared/i18n.jsx";
 import InquiryLines from "./modules/inquiries/InquiryLines.jsx";
 import SystemSettings from "./modules/settings/SystemSettings.jsx";
 import ProfileImage from "./modules/auth/ProfileImage.jsx";
@@ -238,24 +239,26 @@ export default function Workspace({
     onCommand({
       ...a,
       id: recordId(row),
-      initial:
-        a.path.endsWith("/proforma") && row.items?.length
+      initial: a.path.endsWith("/proforma")
+        ? {
+            items: (row.items?.length
+              ? row.items
+              : [{ product: row.product, quantity: row.quantity }]
+            ).map((x) => ({
+              product: x.product,
+              quantity: x.quantity,
+              productTotal: 0,
+            })),
+            border: row.destination || "",
+          }
+        : a.method === "PATCH"
           ? {
-              items: row.items.map((x) => ({
-                product: x.product,
-                quantity: x.quantity,
-                productTotal: 0,
-              })),
-              border: row.destination || "",
+              ...row,
+              ...(row.salaryCents !== undefined
+                ? { salary: row.salaryCents / 100 }
+                : {}),
             }
-          : a.method === "PATCH"
-            ? {
-                ...row,
-                ...(row.salaryCents !== undefined
-                  ? { salary: row.salaryCents / 100 }
-                  : {}),
-              }
-            : undefined,
+          : undefined,
       context: row,
     });
   }
@@ -312,468 +315,472 @@ export default function Workspace({
     ],
   ];
   return (
-    <div className="workspace">
-      <button
-        className={`sidebar-backdrop ${mobile ? "visible" : ""}`}
-        onClick={() => setMobile(false)}
-        aria-label="Close navigation"
-      />
-      <aside className={`sidebar ${mobile ? "open" : ""}`}>
-        <button className="logo-button" onClick={onExit}>
-          <Logo />
-        </button>
-        <div className="workspace-label">
-          {t("Trade workspace")}
-          <span>USD</span>
-        </div>
-        <nav aria-label="Workspace modules">
-          {navGroups.map(([key, title, keys]) => {
-            const entries = allowed.filter((m) => keys.includes(m.key));
-            return entries.length ? (
-              <div key={key}>
-                <span className="nav-group">{t(title)}</span>
-                {entries.map((m) => (
-                  <button
-                    key={m.key}
-                    className={module.key === m.key ? "active" : ""}
-                    onClick={() => navigate(m.key)}
-                  >
-                    <Icon name={m.icon} size={19} />
-                    <span>{t(m.title)}</span>
-                    {module.key === m.key && <i />}
-                  </button>
-                ))}
-              </div>
-            ) : null;
-          })}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-help">
-            <Icon name="shield" />
-            <div>
-              <b>{t("Connected to your backend")}</b>
-              <small>{t("Live records · Server permissions")}</small>
-            </div>
+    <Localized>
+      <div className="workspace">
+        <button
+          className={`sidebar-backdrop ${mobile ? "visible" : ""}`}
+          onClick={() => setMobile(false)}
+          aria-label="Close navigation"
+        />
+        <aside className={`sidebar ${mobile ? "open" : ""}`}>
+          <button className="logo-button" onClick={onExit}>
+            <Logo />
+          </button>
+          <div className="workspace-label">
+            {t("Trade workspace")}
+            <span>USD</span>
           </div>
-          <div className="user-card">
-            <button
-              className="profile-shortcut"
-              aria-label="Open my profile"
-              onClick={() => navigate("auth")}
-            >
-              <ProfileImage api={api} user={user} />
-            </button>
-            <div>
-              <b>{user.name}</b>
-              <small>{user.role}</small>
-            </div>
-            <button
-              className="icon-button"
-              aria-label={t("Sign out")}
-              onClick={onLogout}
-            >
-              <Icon name="logout" size={18} />
-            </button>
-          </div>
-        </div>
-      </aside>
-      <div className="workspace-main">
-        <header className="workspace-header">
-          <div className="breadcrumbs">
-            <button
-              className="icon-button mobile-menu"
-              aria-label="Open navigation"
-              onClick={() => setMobile(true)}
-            >
-              <Icon name="menu" />
-            </button>
-            <span>{t("Trade workspace")}</span>
-            <span>/</span>
-            <b>{t(module.title)}</b>
-          </div>
-          <div className="header-actions">
-            <PreferencesControls />
-            <button
-              className="icon-button notification-button"
-              aria-label={t("Notifications")}
-              onClick={() => navigate("notifications")}
-            >
-              <Icon name="bell" />
-            </button>
-          </div>
-        </header>
-        <main className="workspace-content">
-          {module.key === "dashboard" ? (
-            <Dashboard
-              api={api}
-              user={user}
-              onNavigate={navigate}
-              onView={(item) => {
-                setPendingDetail(item);
-                onNavigate("sales");
-              }}
-              onCommand={onCommand}
-              refresh={refresh}
-            />
-          ) : (
-            <>
-              <div className="page-heading">
-                <div>
-                  <span className="eyebrow">LIVE COMPANY WORKSPACE</span>
-                  <h1>
-                    {t(module.title)}
-                    <span className="heading-dot">.</span>
-                  </h1>
-                  <p>
-                    {t(
-                      descriptions[module.key] ||
-                        "Manage your records and move the next step forward.",
-                    )}
-                  </p>
+          <nav aria-label="Workspace modules">
+            {navGroups.map(([key, title, keys]) => {
+              const entries = allowed.filter((m) => keys.includes(m.key));
+              return entries.length ? (
+                <div key={key}>
+                  <span className="nav-group">{t(title)}</span>
+                  {entries.map((m) => (
+                    <button
+                      key={m.key}
+                      className={module.key === m.key ? "active" : ""}
+                      onClick={() => navigate(m.key)}
+                    >
+                      <Icon name={m.icon} size={19} />
+                      <span>{t(m.title)}</span>
+                      {module.key === m.key && <i />}
+                    </button>
+                  ))}
                 </div>
-                <div className="button-row">
-                  {module.key !== "auth" &&
-                    actions.map((a) => (
-                      <Button
-                        key={a.path}
-                        icon="plus"
-                        onClick={() => onCommand(a)}
-                      >
+              ) : null;
+            })}
+          </nav>
+          <div className="sidebar-bottom">
+            <div className="sidebar-help">
+              <Icon name="shield" />
+              <div>
+                <b>{t("Connected to your backend")}</b>
+                <small>{t("Live records · Server permissions")}</small>
+              </div>
+            </div>
+            <div className="user-card">
+              <button
+                className="profile-shortcut"
+                aria-label="Open my profile"
+                onClick={() => navigate("auth")}
+              >
+                <ProfileImage api={api} user={user} />
+              </button>
+              <div>
+                <b>{user.name}</b>
+                <small>{user.role}</small>
+              </div>
+              <button
+                className="icon-button"
+                aria-label={t("Sign out")}
+                onClick={onLogout}
+              >
+                <Icon name="logout" size={18} />
+              </button>
+            </div>
+          </div>
+        </aside>
+        <div className="workspace-main">
+          <header className="workspace-header">
+            <div className="breadcrumbs">
+              <button
+                className="icon-button mobile-menu"
+                aria-label="Open navigation"
+                onClick={() => setMobile(true)}
+              >
+                <Icon name="menu" />
+              </button>
+              <span>{t("Trade workspace")}</span>
+              <span>/</span>
+              <b>{t(module.title)}</b>
+            </div>
+            <div className="header-actions">
+              <PreferencesControls />
+              <button
+                className="icon-button notification-button"
+                aria-label={t("Notifications")}
+                onClick={() => navigate("notifications")}
+              >
+                <Icon name="bell" />
+              </button>
+            </div>
+          </header>
+          <main className="workspace-content">
+            {module.key === "dashboard" ? (
+              <Dashboard
+                api={api}
+                user={user}
+                onNavigate={navigate}
+                onView={(item) => {
+                  setPendingDetail(item);
+                  onNavigate("sales");
+                }}
+                onCommand={onCommand}
+                refresh={refresh}
+              />
+            ) : (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <span className="eyebrow">LIVE COMPANY WORKSPACE</span>
+                    <h1>
+                      {t(module.title)}
+                      <span className="heading-dot">.</span>
+                    </h1>
+                    <p>
+                      {t(
+                        descriptions[module.key] ||
+                          "Manage your records and move the next step forward.",
+                      )}
+                    </p>
+                  </div>
+                  <div className="button-row">
+                    {module.key !== "auth" &&
+                      actions.map((a) => (
+                        <Button
+                          key={a.path}
+                          icon="plus"
+                          onClick={() => onCommand(a)}
+                        >
+                          {t(a.title)}
+                        </Button>
+                      ))}
+                  </div>
+                </div>
+                <ErrorBox error={error} />
+                {module.key === "reports" ? (
+                  <Reports api={api} />
+                ) : module.key === "auth" ? (
+                  <Settings
+                    user={user}
+                    api={api}
+                    onCommand={onCommand}
+                    onProfileChanged={onProfileChanged}
+                  />
+                ) : module.key === "systemSettings" ? (
+                  <SystemSettings api={api} user={user} />
+                ) : module.path ? (
+                  <>
+                    <section className="panel">
+                      <div className="list-toolbar">
+                        <label className="search-box">
+                          <Icon name="search" />
+                          <input
+                            aria-label={t("Search")}
+                            placeholder={t("Search records")}
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                          />
+                        </label>
+                        <div className="workspace-controls">
+                          {rows.some((r) => r.status) && (
+                            <select
+                              aria-label="Status filter"
+                              className="status-filter"
+                              value={status}
+                              onChange={(e) => setStatus(e.target.value)}
+                            >
+                              <option>All statuses</option>
+                              {[
+                                ...new Set(
+                                  rows.map((r) => r.status).filter(Boolean),
+                                ),
+                              ].map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
+                          )}
+                          {["sales", "catalog"].includes(module.key) && (
+                            <div className="view-tabs">
+                              <button
+                                className={layout === "table" ? "active" : ""}
+                                onClick={() => setLayout("table")}
+                              >
+                                {t("Table")}
+                              </button>
+                              <button
+                                className={layout === "cards" ? "active" : ""}
+                                onClick={() => setLayout("cards")}
+                              >
+                                {t(module.key === "sales" ? "Board" : "Cards")}
+                              </button>
+                            </div>
+                          )}
+                          <Button
+                            className="subtle small"
+                            disabled={loading}
+                            icon="refresh"
+                            onClick={() => setReload((n) => n + 1)}
+                          >
+                            {t("Refresh")}
+                          </Button>
+                        </div>
+                      </div>
+                      {layout === "cards" && module.key === "sales" ? (
+                        loading ? (
+                          <div className="table-loading">Loading orders…</div>
+                        ) : (
+                          <div className="form-body">
+                            <OrderBoard
+                              items={visible}
+                              onView={view}
+                              language={language}
+                            />
+                          </div>
+                        )
+                      ) : layout === "cards" && module.key === "catalog" ? (
+                        <div className="form-body">
+                          <div className="product-grid">
+                            {visible.map((p, i) => (
+                              <article className="product-card" key={p._id}>
+                                <ProductGallery product={p} api={api} />
+                                <div className="product-info">
+                                  <div className="product-card-top">
+                                    <h3>{productName(p, language)}</h3>
+                                    <span>
+                                      {p.active ? "Active" : "Inactive"}
+                                    </span>
+                                  </div>
+                                  <p>
+                                    {[p.grade, p.origin, p.packaging]
+                                      .filter(Boolean)
+                                      .join(" · ")}
+                                  </p>
+                                  <small>
+                                    Minimum order: <b>{p.moq} t</b>
+                                  </small>
+                                  <div className="product-card-actions">
+                                    <Button
+                                      className="secondary small"
+                                      onClick={() => view(p)}
+                                    >
+                                      {t("Details")}
+                                    </Button>
+                                    {rowActions.map((a) => (
+                                      <Button
+                                        key={a.path}
+                                        className="secondary small"
+                                        onClick={() => action(a, p)}
+                                      >
+                                        {t(a.title)}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                          {!visible.length && <Empty />}
+                        </div>
+                      ) : (
+                        <DataTable
+                          renderCell={(item, key) =>
+                            key === "locations" ? (
+                              <div className="button-row">
+                                {item.locations?.map((l) => (
+                                  <Button
+                                    key={l.warehouse}
+                                    className="subtle small"
+                                    onClick={() => setWarehouse(l.warehouse)}
+                                  >
+                                    {l.name}: {l.quantity}
+                                  </Button>
+                                ))}
+                              </div>
+                            ) : key === "images" ? (
+                              <ProductImage
+                                className="table-product-image"
+                                product={item}
+                                image={item.images?.[0]}
+                                api={api}
+                                thumbnail
+                              />
+                            ) : undefined
+                          }
+                          items={visible}
+                          columns={module.columns || []}
+                          rowActions={rowActions}
+                          actionFilter={(a, r) =>
+                            canUseAction(a, r, user.role, { cardEnabled })
+                          }
+                          onAction={action}
+                          onView={view}
+                          loading={loading}
+                        />
+                      )}
+                      {module.key === "inventory" && (
+                        <label>
+                          Warehouse
+                          <select
+                            aria-label="Warehouse filter"
+                            value={warehouse}
+                            onChange={(e) => setWarehouse(e.target.value)}
+                          >
+                            <option value="">All warehouses</option>
+                            {warehouseChoices.map((w) => (
+                              <option key={w._id} value={w._id}>
+                                {w.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      <div className="pagination">
+                        <span>
+                          {visible.length} records · Page {history.length + 1}
+                        </span>
+                        <Button
+                          className="secondary small"
+                          disabled={!history.length || loading}
+                          onClick={() => {
+                            setCursor(history.at(-1));
+                            setHistory(history.slice(0, -1));
+                          }}
+                        >
+                          {t("Previous page")}
+                        </Button>
+                        <Button
+                          className="secondary small"
+                          disabled={!next || loading}
+                          onClick={() => {
+                            setHistory([...history, cursor]);
+                            setCursor(next);
+                          }}
+                        >
+                          {t("Next page")}
+                        </Button>
+                      </div>
+                    </section>
+                  </>
+                ) : (
+                  <Empty />
+                )}
+              </>
+            )}
+            <footer className="workspace-footer">
+              <span>{branding.name}</span>
+              <span>USD · LIVE DATABASE · {new Date().getFullYear()}</span>
+            </footer>
+          </main>
+        </div>
+        {imageProduct && (
+          <ProductImages
+            api={api}
+            product={imageProduct}
+            initialTab={imageProduct.mediaTab}
+            onClose={() => setImageProduct(null)}
+            onUpdated={(product) => {
+              setRows((rows) =>
+                rows.map((row) =>
+                  recordId(row) === recordId(product) ? product : row,
+                ),
+              );
+              setDetail((item) =>
+                item && recordId(item) === recordId(product) ? product : item,
+              );
+            }}
+          />
+        )}
+        {detail && module.key === "sales" ? (
+          <OrderDetail
+            api={api}
+            id={recordId(detail)}
+            initialTab={detail._openPayments ? "payments" : "overview"}
+            user={user}
+            onClose={() => setDetail(null)}
+            onCommand={onCommand}
+            refresh={refresh}
+          />
+        ) : detail && module.key === "reconciliation" ? (
+          <StatementDetail
+            api={api}
+            id={recordId(detail)}
+            onClose={() => setDetail(null)}
+            onCommand={onCommand}
+            refresh={refresh}
+          />
+        ) : (
+          detail && (
+            <Modal
+              title={productName(detail, language) || "Record details"}
+              onClose={() => setDetail(null)}
+            >
+              <div className="form-body">
+                {module.key === "catalog" && (
+                  <>
+                    <ProductGallery product={detail} api={api} large />
+                    <ProductVideo
+                      product={detail}
+                      api={api}
+                      editable={["admin", "manager", "procurement"].includes(
+                        user.role,
+                      )}
+                      onUpdated={(p) => {
+                        setDetail(p);
+                        setReload((n) => n + 1);
+                      }}
+                    />
+                    {user.role !== "customer" && (
+                      <ProductStock api={api} id={recordId(detail)} />
+                    )}
+                  </>
+                )}
+                {module.key === "inquiries" && (
+                  <InquiryLines inquiry={detail} />
+                )}
+                <dl className="record-details">
+                  {Object.entries(detail)
+                    .filter(
+                      ([k]) =>
+                        ![
+                          "__v",
+                          "_labels",
+                          "lines",
+                          "images",
+                          ...(module.key === "inquiries" ? ["items"] : []),
+                        ].includes(k),
+                    )
+                    .map(([k, v]) => (
+                      <div key={k}>
+                        <dt>{t(k === "_id" ? "Record ID" : label(k))}</dt>
+                        <dd>
+                          {typeof v === "object" &&
+                          v !== null &&
+                          !detail._labels?.[k] ? (
+                            <pre className="detail-json">
+                              {JSON.stringify(v, null, 2)}
+                            </pre>
+                          ) : (
+                            display(detail._labels?.[k] ?? v, k, language)
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                </dl>
+                {detail.lines && (
+                  <DataTable
+                    items={detail.lines}
+                    columns={["account", "debitCents", "creditCents"]}
+                  />
+                )}
+                <div className="button-row" style={{ marginTop: 25 }}>
+                  {rowActions
+                    .filter((a) =>
+                      canUseAction(a, detail, user.role, { cardEnabled }),
+                    )
+                    .map((a) => (
+                      <Button key={a.path} onClick={() => action(a, detail)}>
                         {t(a.title)}
                       </Button>
                     ))}
                 </div>
               </div>
-              <ErrorBox error={error} />
-              {module.key === "reports" ? (
-                <Reports api={api} />
-              ) : module.key === "auth" ? (
-                <Settings
-                  user={user}
-                  api={api}
-                  onCommand={onCommand}
-                  onProfileChanged={onProfileChanged}
-                />
-              ) : module.key === "systemSettings" ? (
-                <SystemSettings api={api} user={user} />
-              ) : module.path ? (
-                <>
-                  <section className="panel">
-                    <div className="list-toolbar">
-                      <label className="search-box">
-                        <Icon name="search" />
-                        <input
-                          aria-label={t("Search")}
-                          placeholder={t("Search records")}
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                        />
-                      </label>
-                      <div className="workspace-controls">
-                        {rows.some((r) => r.status) && (
-                          <select
-                            aria-label="Status filter"
-                            className="status-filter"
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                          >
-                            <option>All statuses</option>
-                            {[
-                              ...new Set(
-                                rows.map((r) => r.status).filter(Boolean),
-                              ),
-                            ].map((s) => (
-                              <option key={s}>{s}</option>
-                            ))}
-                          </select>
-                        )}
-                        {["sales", "catalog"].includes(module.key) && (
-                          <div className="view-tabs">
-                            <button
-                              className={layout === "table" ? "active" : ""}
-                              onClick={() => setLayout("table")}
-                            >
-                              {t("Table")}
-                            </button>
-                            <button
-                              className={layout === "cards" ? "active" : ""}
-                              onClick={() => setLayout("cards")}
-                            >
-                              {t(module.key === "sales" ? "Board" : "Cards")}
-                            </button>
-                          </div>
-                        )}
-                        <Button
-                          className="subtle small"
-                          disabled={loading}
-                          icon="refresh"
-                          onClick={() => setReload((n) => n + 1)}
-                        >
-                          {t("Refresh")}
-                        </Button>
-                      </div>
-                    </div>
-                    {layout === "cards" && module.key === "sales" ? (
-                      loading ? (
-                        <div className="table-loading">Loading orders…</div>
-                      ) : (
-                        <div className="form-body">
-                          <OrderBoard
-                            items={visible}
-                            onView={view}
-                            language={language}
-                          />
-                        </div>
-                      )
-                    ) : layout === "cards" && module.key === "catalog" ? (
-                      <div className="form-body">
-                        <div className="product-grid">
-                          {visible.map((p, i) => (
-                            <article className="product-card" key={p._id}>
-                              <ProductGallery product={p} api={api} />
-                              <div className="product-info">
-                                <div className="product-card-top">
-                                  <h3>{productName(p, language)}</h3>
-                                  <span>
-                                    {p.active ? "Active" : "Inactive"}
-                                  </span>
-                                </div>
-                                <p>
-                                  {[p.grade, p.origin, p.packaging]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </p>
-                                <small>
-                                  Minimum order: <b>{p.moq} t</b>
-                                </small>
-                                <div className="product-card-actions">
-                                  <Button
-                                    className="secondary small"
-                                    onClick={() => view(p)}
-                                  >
-                                    {t("Details")}
-                                  </Button>
-                                  {rowActions.map((a) => (
-                                    <Button
-                                      key={a.path}
-                                      className="secondary small"
-                                      onClick={() => action(a, p)}
-                                    >
-                                      {t(a.title)}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                        {!visible.length && <Empty />}
-                      </div>
-                    ) : (
-                      <DataTable
-                        renderCell={(item, key) =>
-                          key === "locations" ? (
-                            <div className="button-row">
-                              {item.locations?.map((l) => (
-                                <Button
-                                  key={l.warehouse}
-                                  className="subtle small"
-                                  onClick={() => setWarehouse(l.warehouse)}
-                                >
-                                  {l.name}: {l.quantity}
-                                </Button>
-                              ))}
-                            </div>
-                          ) : key === "images" ? (
-                            <ProductImage
-                              className="table-product-image"
-                              product={item}
-                              image={item.images?.[0]}
-                              api={api}
-                              thumbnail
-                            />
-                          ) : undefined
-                        }
-                        items={visible}
-                        columns={module.columns || []}
-                        rowActions={rowActions}
-                        actionFilter={(a, r) =>
-                          canUseAction(a, r, user.role, { cardEnabled })
-                        }
-                        onAction={action}
-                        onView={view}
-                        loading={loading}
-                      />
-                    )}
-                    {module.key === "inventory" && (
-                      <label>
-                        Warehouse
-                        <select
-                          aria-label="Warehouse filter"
-                          value={warehouse}
-                          onChange={(e) => setWarehouse(e.target.value)}
-                        >
-                          <option value="">All warehouses</option>
-                          {warehouseChoices.map((w) => (
-                            <option key={w._id} value={w._id}>
-                              {w.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
-                    <div className="pagination">
-                      <span>
-                        {visible.length} records · Page {history.length + 1}
-                      </span>
-                      <Button
-                        className="secondary small"
-                        disabled={!history.length || loading}
-                        onClick={() => {
-                          setCursor(history.at(-1));
-                          setHistory(history.slice(0, -1));
-                        }}
-                      >
-                        {t("Previous page")}
-                      </Button>
-                      <Button
-                        className="secondary small"
-                        disabled={!next || loading}
-                        onClick={() => {
-                          setHistory([...history, cursor]);
-                          setCursor(next);
-                        }}
-                      >
-                        {t("Next page")}
-                      </Button>
-                    </div>
-                  </section>
-                </>
-              ) : (
-                <Empty />
-              )}
-            </>
-          )}
-          <footer className="workspace-footer">
-            <span>{branding.name}</span>
-            <span>USD · LIVE DATABASE · {new Date().getFullYear()}</span>
-          </footer>
-        </main>
+            </Modal>
+          )
+        )}
       </div>
-      {imageProduct && (
-        <ProductImages
-          api={api}
-          product={imageProduct}
-          initialTab={imageProduct.mediaTab}
-          onClose={() => setImageProduct(null)}
-          onUpdated={(product) => {
-            setRows((rows) =>
-              rows.map((row) =>
-                recordId(row) === recordId(product) ? product : row,
-              ),
-            );
-            setDetail((item) =>
-              item && recordId(item) === recordId(product) ? product : item,
-            );
-          }}
-        />
-      )}
-      {detail && module.key === "sales" ? (
-        <OrderDetail
-          api={api}
-          id={recordId(detail)}
-          initialTab={detail._openPayments ? "payments" : "overview"}
-          user={user}
-          onClose={() => setDetail(null)}
-          onCommand={onCommand}
-          refresh={refresh}
-        />
-      ) : detail && module.key === "reconciliation" ? (
-        <StatementDetail
-          api={api}
-          id={recordId(detail)}
-          onClose={() => setDetail(null)}
-          onCommand={onCommand}
-          refresh={refresh}
-        />
-      ) : (
-        detail && (
-          <Modal
-            title={productName(detail, language) || "Record details"}
-            onClose={() => setDetail(null)}
-          >
-            <div className="form-body">
-              {module.key === "catalog" && (
-                <>
-                  <ProductGallery product={detail} api={api} large />
-                  <ProductVideo
-                    product={detail}
-                    api={api}
-                    editable={["admin", "manager", "procurement"].includes(
-                      user.role,
-                    )}
-                    onUpdated={(p) => {
-                      setDetail(p);
-                      setReload((n) => n + 1);
-                    }}
-                  />
-                  {user.role !== "customer" && (
-                    <ProductStock api={api} id={recordId(detail)} />
-                  )}
-                </>
-              )}
-              {module.key === "inquiries" && <InquiryLines inquiry={detail} />}
-              <dl className="record-details">
-                {Object.entries(detail)
-                  .filter(
-                    ([k]) =>
-                      ![
-                        "__v",
-                        "_labels",
-                        "lines",
-                        "images",
-                        ...(module.key === "inquiries" ? ["items"] : []),
-                      ].includes(k),
-                  )
-                  .map(([k, v]) => (
-                    <div key={k}>
-                      <dt>{t(k === "_id" ? "Record ID" : label(k))}</dt>
-                      <dd>
-                        {typeof v === "object" &&
-                        v !== null &&
-                        !detail._labels?.[k] ? (
-                          <pre className="detail-json">
-                            {JSON.stringify(v, null, 2)}
-                          </pre>
-                        ) : (
-                          display(detail._labels?.[k] ?? v, k, language)
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-              </dl>
-              {detail.lines && (
-                <DataTable
-                  items={detail.lines}
-                  columns={["account", "debitCents", "creditCents"]}
-                />
-              )}
-              <div className="button-row" style={{ marginTop: 25 }}>
-                {rowActions
-                  .filter((a) =>
-                    canUseAction(a, detail, user.role, { cardEnabled }),
-                  )
-                  .map((a) => (
-                    <Button key={a.path} onClick={() => action(a, detail)}>
-                      {t(a.title)}
-                    </Button>
-                  ))}
-              </div>
-            </div>
-          </Modal>
-        )
-      )}
-    </div>
+    </Localized>
   );
 }
 const descriptions = {
@@ -804,45 +811,47 @@ function OrderBoard({ items, onView, language }) {
     ],
   ];
   return (
-    <div className="board">
-      {groups.map(([title, states]) => {
-        const rows = items.filter((o) => states.includes(o.status));
-        return (
-          <section className="board-column" key={title}>
-            <div className="board-heading">
-              {title}
-              <b>{rows.length}</b>
-            </div>
-            {rows.map((o) => (
-              <button
-                className="order-tile"
-                key={o._id}
-                onClick={() => onView(o)}
-              >
-                <small>
-                  #{shortId(o)} · {o.status}
-                </small>
-                <h3>{productName(o, language)}</h3>
-                <small>
-                  {o._labels?.customer || o.border} · {o.quantity} t
-                </small>
-                <div className="payment-track">
-                  <i
-                    style={{
-                      width: `${Math.min(100, (o.paidCents / o.totalCents) * 100)}%`,
-                    }}
-                  />
-                </div>
-                <small>{money(o.paidCents)} verified</small>
-                <div className="order-tile-footer">
-                  <span>{o.border}</span>
-                  <span className="tile-amount">{money(o.totalCents)}</span>
-                </div>
-              </button>
-            ))}
-          </section>
-        );
-      })}
-    </div>
+    <Localized>
+      <div className="board">
+        {groups.map(([title, states]) => {
+          const rows = items.filter((o) => states.includes(o.status));
+          return (
+            <section className="board-column" key={title}>
+              <div className="board-heading">
+                {title}
+                <b>{rows.length}</b>
+              </div>
+              {rows.map((o) => (
+                <button
+                  className="order-tile"
+                  key={o._id}
+                  onClick={() => onView(o)}
+                >
+                  <small>
+                    #{shortId(o)} · {o.status}
+                  </small>
+                  <h3>{productName(o, language)}</h3>
+                  <small>
+                    {o._labels?.customer || o.border} · {o.quantity} t
+                  </small>
+                  <div className="payment-track">
+                    <i
+                      style={{
+                        width: `${Math.min(100, (o.paidCents / o.totalCents) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <small>{money(o.paidCents)} verified</small>
+                  <div className="order-tile-footer">
+                    <span>{o.border}</span>
+                    <span className="tile-amount">{money(o.totalCents)}</span>
+                  </div>
+                </button>
+              ))}
+            </section>
+          );
+        })}
+      </div>
+    </Localized>
   );
 }
