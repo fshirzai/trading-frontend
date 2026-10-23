@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { validPreferences, resolveMode } from "./preferences.js";
+import { storeTranslations } from "./store-translations.js";
 import { extendedTranslations } from "./translations.js";
 const ps = {
   Overview: "لنډیز",
@@ -161,7 +162,8 @@ export function Preferences({ children }) {
     setPrefs((p) => validPreferences({ ...p, [key]: value }));
   const t = (value) =>
     typeof value === "string"
-      ? (extendedTranslations[language] || {})[value] ||
+      ? (storeTranslations[language] || {})[value] ||
+        (extendedTranslations[language] || {})[value] ||
         (language === "ps" ? ps : language === "fa" ? fa : {})[value] ||
         value
       : value;

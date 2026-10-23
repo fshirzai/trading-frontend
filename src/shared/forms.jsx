@@ -53,8 +53,11 @@ export function defaults(schema) {
             ? 0
             : f.type === "object"
               ? defaults(f)
-              : Array.from({ length: f.minItems || 0 }, () =>
-                  defaults(f.items),
+              : Array.from(
+                  {
+                    length: schema.required?.includes(k) ? f.minItems || 0 : 0,
+                  },
+                  () => defaults(f.items),
                 )),
       ]),
   );
@@ -356,6 +359,23 @@ export function CommandForm({ command, api, user, onClose, onDone }) {
           ...Object.fromEntries(pairs.map(([k, v]) => [k, v])),
           ...(command.context?.items?.length
             ? {
+                product: [
+                  ...(pairs.find(([k]) => k === "product")?.[1] || []),
+                  ...command.context.items
+                    .filter(
+                      (i) =>
+                        !(pairs.find(([k]) => k === "product")?.[1] || []).some(
+                          (x) => x.value === i.product,
+                        ),
+                    )
+                    .map((i) => ({
+                      value: i.product,
+                      label:
+                        i.snapshot?.name?.[language] ||
+                        i.snapshot?.name?.en ||
+                        i.product,
+                    })),
+                ],
                 item: command.context.items.map((i) => ({
                   value: i._id,
                   label: `${i.snapshot?.name?.[language] || i.snapshot?.name?.en || "Product"} - ${i.quantity} ${i.snapshot?.unit || "units"}`,

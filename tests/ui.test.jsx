@@ -580,3 +580,262 @@ test("product video control completes chunked upload and updates product", async
   assert.equal(calls[1][1].headers["X-Video-Chunk"], "0");
   assert.ok(calls[2][0].endsWith("/complete"));
 });
+
+const { default: Storefront } =
+  await import("../src/modules/public/Storefront.jsx");
+const { default: CartProvider } =
+  await import("../src/modules/public/CartProvider.jsx");
+const storefront = (props) =>
+  mount(
+    <CartProvider>
+      <Storefront {...props} />
+    </CartProvider>,
+  );
+test("public navigation uses real page paths and exposes search and filters", async () => {
+  const calls = [];
+  const api = {
+    request: async (path) => {
+      calls.push(path);
+      return path.includes("/filters")
+        ? { categories: ["Pulses"], origins: ["Afghanistan"], grades: ["A"] }
+        : { items: [], nextCursor: null };
+    },
+  };
+  storefront({ api, page: "products", onNavigate: () => {} });
+  assert.equal(
+    screen
+      .getByRole("link", { name: "Terms & conditions" })
+      .getAttribute("href"),
+    "/terms/",
+  );
+  fireEvent.change(screen.getByLabelText("Search products"), {
+    target: { value: "lentils" },
+  });
+  await waitFor(() =>
+    assert.ok(calls.some((x) => x.includes("search=lentils"))),
+  );
+  fireEvent.change(screen.getByLabelText("Category"), {
+    target: { value: "Pulses" },
+  });
+  await waitFor(() =>
+    assert.ok(calls.some((x) => x.includes("category=Pulses"))),
+  );
+});
+test("cart submits all products and quantities as a single customer inquiry", async () => {
+  const other = "b".repeat(24);
+  localStorage.setItem(
+    "trade-cart-v1",
+    JSON.stringify([
+      { product: id, quantity: 3 },
+      { product: other, quantity: 2 },
+    ]),
+  );
+  const calls = [];
+  const api = {
+    request: async (path, opts) => {
+      calls.push([path, opts]);
+      return path === "/inquiries"
+        ? { _id: "c".repeat(24) }
+        : {
+            _id: path.split("/").at(-1),
+            name: { en: path.endsWith(id) ? "Beans" : "Lentils" },
+            moq: 1,
+            unit: "tonne",
+          };
+    },
+  };
+  storefront({
+    api,
+    page: "cart",
+    user: { role: "customer" },
+    onNavigate: () => {},
+  });
+  await screen.findByText("Beans");
+  await screen.findByText("Lentils");
+  fireEvent.change(screen.getByLabelText("Delivery place"), {
+    target: { value: "Kabul delivery point" },
+  });
+  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Send quotation request" }),
+  );
+  await screen.findByText("Request received");
+  const body = calls.find(([path]) => path === "/inquiries")[1].body;
+  assert.equal(body.items.length, 2);
+  assert.equal(body.items[0].quantity, 3);
+  assert.equal(body.items[1].quantity, 2);
+  assert.equal(body.destination, "Kabul delivery point");
+  assert.equal(body.preferredPayment, "TT");
+  await waitFor(() =>
+    assert.equal(JSON.parse(localStorage.getItem("trade-cart-v1")).length, 0),
+  );
+});
+test("public About page includes editable starter content and two bundled images", () => {
+  storefront({
+    api: { request: async () => ({}) },
+    page: "about",
+    onNavigate: () => {},
+  });
+  assert.ok(screen.getByText(/We connect agricultural products/));
+  assert.equal(
+    screen.getByAltText("Agricultural fields").getAttribute("src"),
+    "/images/fields.jpg",
+  );
+  assert.equal(
+    screen.getByAltText("Harvested grain").getAttribute("src"),
+    "/images/grain.jpg",
+  );
+});
+const { default: InquiryLines } =
+  await import("../src/modules/inquiries/InquiryLines.jsx");
+test("inquiry details display every requested product by its snapshot name", () => {
+  mount(
+    <InquiryLines
+      inquiry={{
+        items: [
+          {
+            product: id,
+            quantity: 3,
+            snapshot: { name: { en: "Beans" }, unit: "tonne" },
+          },
+          {
+            product: "b".repeat(24),
+            quantity: 2,
+            snapshot: { name: { en: "Lentils" }, unit: "tonne" },
+          },
+        ],
+        preferredPayment: "VISA",
+      }}
+    />,
+  );
+  assert.ok(screen.getByText("Beans"));
+  assert.ok(screen.getByText("Lentils"));
+  assert.ok(screen.getByText("3 tonne"));
+  assert.match(
+    screen.getByText(/Preferred payment method/).textContent,
+    /HesabPay/,
+  );
+});
+const { default: TradingApp } = await import("../src/TradingApp.jsx");
+test("a delayed anonymous restoration failure cannot overwrite a successful sign-in", async () => {
+  const original = globalThis.fetch,
+    scroll = window.scrollTo;
+  window.scrollTo = () => {};
+  let finish;
+  const json = (data, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  globalThis.fetch = async (path) => {
+    if (path.endsWith("/health/ready")) return json({ status: "ready" });
+    if (path.endsWith("/settings/public")) return json(defaultBranding);
+    if (path.endsWith("/auth/refresh"))
+      return new Promise((resolve) => {
+        finish = resolve;
+      });
+    if (path.endsWith("/auth/login"))
+      return json({
+        accessToken: "new-token",
+        user: {
+          id,
+          name: "Browser Customer",
+          email: "customer@example.com",
+          role: "customer",
+          emailVerified: true,
+        },
+      });
+    if (path.endsWith("/workspace/summary"))
+      return json({
+        totals: { orders: 0 },
+        stages: [],
+        daily: [],
+        recent: [],
+        newInquiries: 0,
+        pendingPayments: 0,
+        inventory: null,
+      });
+    return json({ items: [], nextCursor: null });
+  };
+  try {
+    const view = render(<TradingApp initialView="login" />);
+    await waitFor(() => assert.equal(typeof finish, "function"));
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "customer@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "Test-password-123!" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Sign in", exact: true }),
+    );
+    await waitFor(() => assert.ok(view.container.querySelector(".workspace")));
+    finish(json({ error: "Authentication required" }, 401));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    assert.ok(view.container.querySelector(".workspace"));
+  } finally {
+    cleanup();
+    globalThis.fetch = original;
+    window.scrollTo = scroll;
+  }
+});
+test("order-list card action opens HesabPay amount confirmation instead of the Stripe command", async () => {
+  const order = {
+    _id: id,
+    acceptedAt: new Date().toISOString(),
+    status: "Deposit pending",
+    paidCents: 0,
+    totalCents: 10000,
+    productCents: 10000,
+    feesCents: 0,
+    quantity: 1,
+    productSnapshot: { name: { en: "Beans" } },
+    border: "Kabul",
+    items: [],
+  };
+  let commands = 0;
+  const method = {
+    method: "VISA",
+    provider: "hesabpay",
+    enabled: true,
+    hesabpay: {
+      account: "b".repeat(24),
+      afnPerUsd: 70,
+      label: "Test merchant",
+      environment: "sandbox",
+    },
+  };
+  const api = {
+    request: async (path) =>
+      path === "/payment-methods"
+        ? { methods: [method] }
+        : path === "/orders/" + id
+          ? { order, payments: [], shipments: [], returns: [] }
+          : path.startsWith("/orders")
+            ? { items: [order], nextCursor: null }
+            : { items: [], nextCursor: null },
+  };
+  mount(
+    <Workspace
+      api={api}
+      user={{ id, name: "Customer", role: "customer" }}
+      active="sales"
+      onNavigate={() => {}}
+      onExit={() => {}}
+      onCommand={() => {
+        commands++;
+      }}
+      onLogout={() => {}}
+    />,
+  );
+  const option = await screen.findByRole("option", {
+    name: "Pay by card",
+    exact: true,
+  });
+  fireEvent.change(option.closest("select"), {
+    target: { value: option.value },
+  });
+  await screen.findByText("I confirm the AFN charge shown above.");
+  assert.ok(screen.getByRole("button", { name: "Continue to HesabPay" }));
+  assert.equal(commands, 0);
+});

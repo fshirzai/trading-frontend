@@ -1,5 +1,6 @@
 "use client";
-import CompanyPage from "./modules/settings/CompanyPage.jsx";
+import CartProvider from "./modules/public/CartProvider.jsx";
+import { publicPaths } from "./modules/public/SiteLayout.jsx";
 import BrandingProvider from "./modules/settings/BrandingProvider.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createApi } from "./shared/api.js";
@@ -51,6 +52,26 @@ function App({ initialView = "home" }) {
     }
   }
   function navigate(v, module = "dashboard") {
+    if (publicPaths[v]) {
+      if (window.location.pathname !== publicPaths[v])
+        window.location.assign(publicPaths[v]);
+      else {
+        setCommand(null);
+        setView(v);
+        window.history.replaceState(
+          null,
+          "",
+          publicPaths[v] + window.location.search,
+        );
+        window.scrollTo(0, 0);
+      }
+      return;
+    }
+    if (v === "workspace" && window.location.pathname !== "/") {
+      window.location.assign("/#workspace/" + module);
+      return;
+    }
+
     setCommand(null);
     setView(v);
     setActive(module);
@@ -66,10 +87,11 @@ function App({ initialView = "home" }) {
       try {
         const u = await api.restore();
         if (live) {
+          userRef.current = u;
           setUser(u);
           if (
             initialView === "home" &&
-            !["#about", "#contact"].includes(window.location.hash)
+            window.location.hash.startsWith("#workspace/")
           ) {
             const key = window.location.hash
               .replace("#workspace/", "")
@@ -83,7 +105,11 @@ function App({ initialView = "home" }) {
           }
         }
       } catch {
-        if (live && window.location.hash.startsWith("#workspace/"))
+        if (
+          live &&
+          !userRef.current &&
+          window.location.hash.startsWith("#workspace/")
+        )
           setView("login");
       }
     });
@@ -106,6 +132,12 @@ function App({ initialView = "home" }) {
       } else if (
         [
           "about",
+          "products",
+          "product",
+          "cart",
+          "terms",
+          "privacy",
+          "delivery",
           "contact",
           "login",
           "register",
@@ -188,7 +220,7 @@ function App({ initialView = "home" }) {
   }
   return (
     <>
-      {connection !== "ready" ? (
+      {connection !== "ready" && !Object.hasOwn(publicPaths, view) ? (
         <ConnectionPanel
           status={connection}
           error={connectionError}
@@ -206,23 +238,8 @@ function App({ initialView = "home" }) {
           refresh={refresh}
           onProfileChanged={setUser}
         />
-      ) : ["about", "contact"].includes(view) ? (
-        <CompanyPage page={view} onNavigate={navigate} user={user} />
-      ) : view === "home" ? (
-        <PublicSite
-          api={api}
-          onNavigate={(v) => navigate(v)}
-          user={user}
-          onInquiry={(p) =>
-            setCommand({
-              title: "New inquiry",
-              path: "/inquiries",
-              method: "POST",
-              initial: { product: p._id, quantity: p.moq || 1 },
-              context: p,
-            })
-          }
-        />
+      ) : Object.hasOwn(publicPaths, view) ? (
+        <PublicSite api={api} user={user} onNavigate={navigate} page={view} />
       ) : (
         <AuthPage
           key={view}
@@ -230,7 +247,15 @@ function App({ initialView = "home" }) {
           api={api}
           onNavigate={navigate}
           onLogin={(u) => {
+            userRef.current = u;
             setUser(u);
+            try {
+              if (localStorage.getItem("trade-after-login") === "cart") {
+                localStorage.removeItem("trade-after-login");
+                navigate("cart");
+                return;
+              }
+            } catch {}
             const target = window.location.hash.match(
               /^#workspace\/([^/]+)(?:\/([a-f\d]{24}))?$/,
             );
@@ -324,7 +349,9 @@ export default function TradingApp(props) {
   return (
     <Preferences>
       <BrandingProvider>
-        <App {...props} />
+        <CartProvider>
+          <App {...props} />
+        </CartProvider>
       </BrandingProvider>
     </Preferences>
   );

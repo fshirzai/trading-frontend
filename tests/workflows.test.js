@@ -34,17 +34,28 @@ test("disabled card adapter is never advertised as usable checkout", () => {
   assert.ok(
     !canUseAction(
       { path: "/orders/{id}/checkout" },
-      { acceptedAt: "date" },
+      { acceptedAt: "date", totalCents: 10000, paidCents: 0 },
       "customer",
     ),
   );
   assert.ok(
     canUseAction(
       { path: "/orders/{id}/checkout" },
-      { acceptedAt: "date" },
+      { acceptedAt: "date", totalCents: 10000, paidCents: 0 },
       "customer",
       { cardEnabled: true },
     ),
+  );
+});
+test("fully paid orders do not offer another card charge", () => {
+  assert.equal(
+    canUseAction(
+      { path: "/orders/{id}/checkout" },
+      { acceptedAt: "date", paidCents: 10000, totalCents: 10000 },
+      "customer",
+      { cardEnabled: true },
+    ),
+    false,
   );
 });
 test("return estimate retains 25% of total and uses the first split handover deadline", () => {

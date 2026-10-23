@@ -474,13 +474,39 @@
         "minLength": 1,
         "maxLength": 200
       },
+      "items": {
+        "minItems": 1,
+        "maxItems": 30,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "product": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "quantity": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "required": ["product", "quantity"],
+          "additionalProperties": false
+        }
+      },
+      "preferredPayment": {
+        "default": "TT",
+        "type": "string",
+        "enum": ["TT", "VISA"]
+      },
       "source": {
         "default": "website",
         "type": "string",
         "enum": ["website", "whatsapp", "phone", "office"]
       }
     },
-    "required": ["product", "quantity", "source"],
+    "required": ["product", "quantity", "preferredPayment", "source"],
     "additionalProperties": false
   },
   "POST /inquiries/{id}/proforma": {

@@ -1,4 +1,5 @@
 "use client";
+import HesabCheckout from "../payments/HesabCheckout.jsx";
 import ReceiptUpload from "../documents/ReceiptUpload.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox, Modal, Badge } from "../../shared/ui.jsx";
@@ -21,12 +22,13 @@ export default function OrderDetail({
   onClose,
   onCommand,
   refresh,
+  initialTab = "overview",
 }) {
   const { t, language } = usePreferences();
   const [data, setData] = useState(null),
     [error, setError] = useState(null),
     [methods, setMethods] = useState([]),
-    [tab, setTab] = useState("overview"),
+    [tab, setTab] = useState(initialTab),
     [reload, setReload] = useState(0);
   useEffect(() => {
     let live = true;
@@ -55,6 +57,13 @@ export default function OrderDetail({
   const quote = o ? returnEstimate(o, data.shipments) : null;
   const stage = o ? orderStageIndex(o) : -1;
   function command(a, r = o) {
+    if (
+      a.path.endsWith("/checkout") &&
+      methods.some((x) => x.provider === "hesabpay" && x.enabled)
+    ) {
+      setTab("payments");
+      return;
+    }
     onCommand({
       ...a,
       id: r._id,
@@ -301,6 +310,21 @@ export default function OrderDetail({
             {tab === "payments" && (
               <section className="detail-section">
                 <h3>{t("Payments")}</h3>
+                {o.acceptedAt &&
+                  o.totalCents > o.paidCents &&
+                  !["Return requested", "Refunded"].includes(o.status) &&
+                  methods.find(
+                    (x) => x.provider === "hesabpay" && x.enabled,
+                  ) && (
+                    <HesabCheckout
+                      api={api}
+                      order={o}
+                      method={methods.find(
+                        (x) => x.provider === "hesabpay" && x.enabled,
+                      )}
+                    />
+                  )}
+
                 {!!o.acceptedAt &&
                   !["Return requested", "Refunded"].includes(o.status) && (
                     <ReceiptUpload

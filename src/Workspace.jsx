@@ -1,4 +1,5 @@
 "use client";
+import InquiryLines from "./modules/inquiries/InquiryLines.jsx";
 import SystemSettings from "./modules/settings/SystemSettings.jsx";
 import ProfileImage from "./modules/auth/ProfileImage.jsx";
 import { useBranding } from "./modules/settings/BrandingProvider.jsx";
@@ -66,6 +67,7 @@ export default function Workspace({
     [reload, setReload] = useState(0),
     [layout, setLayout] = useState("table"),
     [cardEnabled, setCardEnabled] = useState(false);
+  const [cardProvider, setCardProvider] = useState("stripe");
   const [imageProduct, setImageProduct] = useState(null);
   useEffect(() => {
     const t = setTimeout(() => {
@@ -120,10 +122,14 @@ export default function Workspace({
     api
       .request("/payment-methods")
       .then((r) => {
-        if (live)
+        if (live) {
+          setCardProvider(
+            r.methods.find((m) => m.method === "VISA")?.provider || "stripe",
+          );
           setCardEnabled(
             r.methods.some((m) => m.method === "VISA" && m.enabled),
           );
+        }
       })
       .catch(() => {});
     return () => {
@@ -209,6 +215,10 @@ export default function Workspace({
       mediaTab: "video",
     });
   function action(a, row) {
+    if (a.path.endsWith("/checkout") && cardProvider === "hesabpay") {
+      setDetail({ ...row, _openPayments: true });
+      return;
+    }
     if (a.fromRequest) {
       onCommand({
         ...a,
@@ -229,14 +239,23 @@ export default function Workspace({
       ...a,
       id: recordId(row),
       initial:
-        a.method === "PATCH"
+        a.path.endsWith("/proforma") && row.items?.length
           ? {
-              ...row,
-              ...(row.salaryCents !== undefined
-                ? { salary: row.salaryCents / 100 }
-                : {}),
+              items: row.items.map((x) => ({
+                product: x.product,
+                quantity: x.quantity,
+                productTotal: 0,
+              })),
+              border: row.destination || "",
             }
-          : undefined,
+          : a.method === "PATCH"
+            ? {
+                ...row,
+                ...(row.salaryCents !== undefined
+                  ? { salary: row.salaryCents / 100 }
+                  : {}),
+              }
+            : undefined,
       context: row,
     });
   }
@@ -663,6 +682,7 @@ export default function Workspace({
         <OrderDetail
           api={api}
           id={recordId(detail)}
+          initialTab={detail._openPayments ? "payments" : "overview"}
           user={user}
           onClose={() => setDetail(null)}
           onCommand={onCommand}
@@ -702,10 +722,18 @@ export default function Workspace({
                   )}
                 </>
               )}
+              {module.key === "inquiries" && <InquiryLines inquiry={detail} />}
               <dl className="record-details">
                 {Object.entries(detail)
                   .filter(
-                    ([k]) => !["__v", "_labels", "lines", "images"].includes(k),
+                    ([k]) =>
+                      ![
+                        "__v",
+                        "_labels",
+                        "lines",
+                        "images",
+                        ...(module.key === "inquiries" ? ["items"] : []),
+                      ].includes(k),
                   )
                   .map(([k, v]) => (
                     <div key={k}>

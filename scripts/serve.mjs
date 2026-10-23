@@ -13,6 +13,13 @@ const types = {
   ".ico": "image/x-icon",
   ".txt": "text/plain; charset=utf-8",
   ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
 };
 export function createFrontendServer({
   root = path.resolve("out"),
@@ -51,7 +58,7 @@ export function createFrontendServer({
       }
       const url = new URL(req.url, base);
       if (url.pathname.startsWith("/api/")) {
-        if (!["GET", "POST", "PATCH", "OPTIONS"].includes(req.method)) {
+        if (!["GET", "POST", "PATCH", "PUT", "OPTIONS"].includes(req.method)) {
           res.writeHead(405).end();
           return;
         }
@@ -60,7 +67,7 @@ export function createFrontendServer({
           return;
         }
         if (
-          ["POST", "PATCH"].includes(req.method) &&
+          ["POST", "PATCH", "PUT"].includes(req.method) &&
           req.headers.origin !== origin
         ) {
           res.writeHead(403).end("Trusted Origin required");
@@ -88,6 +95,7 @@ export function createFrontendServer({
           "x-document-name",
           "x-document-kind",
           "x-product-version",
+          "x-settings-revision",
           "x-video-chunk",
           "range",
         ])

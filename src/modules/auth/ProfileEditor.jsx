@@ -1,4 +1,5 @@
 "use client";
+import { Localized } from "../../shared/i18n.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox } from "../../shared/ui.jsx";
 import ProfileImage from "./ProfileImage.jsx";
@@ -87,7 +88,7 @@ export default function ProfileEditor({ api, user, onProfileChanged }) {
     e.target.value = "";
   }
   return (
-    <>
+    <Localized>
       <ErrorBox error={error} />
       {message && (
         <p className="success-note" role="status">
@@ -231,6 +232,6 @@ export default function ProfileEditor({ api, user, onProfileChanged }) {
           </div>
         ))}
       </section>
-    </>
+    </Localized>
   );
 }

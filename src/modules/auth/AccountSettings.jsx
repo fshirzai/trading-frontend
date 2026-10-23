@@ -1,4 +1,5 @@
 "use client";
+import { Localized } from "../../shared/i18n.jsx";
 import ProfileEditor from "./ProfileEditor.jsx";
 import ProfileImage from "./ProfileImage.jsx";
 import { Button, Badge } from "../../shared/ui.jsx";
@@ -18,7 +19,7 @@ export default function Settings({ user, onCommand, api, onProfileChanged }) {
   };
   const act = (path) => onCommand(auth.actions.find((a) => a.path === path));
   return (
-    <>
+    <Localized>
       <section className="profile-status">
         <ProfileImage api={api} user={user} />
         <div>
@@ -143,6 +144,6 @@ export default function Settings({ user, onCommand, api, onProfileChanged }) {
           </p>
         </section>
       </div>
-    </>
+    </Localized>
   );
 }

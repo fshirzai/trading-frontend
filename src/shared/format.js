@@ -28,7 +28,7 @@ export const date = (value) =>
 export function formBody(schema, values) {
   const result = {};
   for (const [key, rawField] of Object.entries(schema.properties || {})) {
-    const value = values[key];
+    const value = values[key] === undefined ? rawField.default : values[key];
     const field = rawField.type
       ? rawField
       : { ...rawField, ...rawField.anyOf?.[0] };

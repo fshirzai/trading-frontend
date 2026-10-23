@@ -5,6 +5,7 @@ export function canUseAction(action, row, role, { cardEnabled = false } = {}) {
   if (p.includes("/checkout"))
     return (
       cardEnabled &&
+      row.paidCents < row.totalCents &&
       !!row.acceptedAt &&
       !["Return requested", "Refunded", "Cancelled"].includes(row.status)
     );

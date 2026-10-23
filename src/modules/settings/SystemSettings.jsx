@@ -1,4 +1,7 @@
 "use client";
+import HesabPaySettings from "./HesabPaySettings.jsx";
+import { companyPhoto } from "../public/Storefront.jsx";
+import { usePreferences, Localized } from "../../shared/i18n.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox } from "../../shared/ui.jsx";
 import {
@@ -16,8 +19,12 @@ const fields = [
   ["address", "Office address", 1000],
   ["workingHours", "Working hours", 240],
   ["website", "Website (HTTPS)", 500],
+  ["termsBody", "Terms page content", 12000],
+  ["privacyBody", "Privacy page content", 12000],
+  ["deliveryBody", "Delivery page content", 12000],
 ];
 export default function SystemSettings({ api, user }) {
+  const { t } = usePreferences();
   const { updateBranding } = useBranding();
   const [saved, setSaved] = useState(null),
     [form, setForm] = useState(defaultBranding),
@@ -46,7 +53,13 @@ export default function SystemSettings({ api, user }) {
     return (
       <p role="alert">Only the administrator can change system settings.</p>
     );
-  const dirty = saved && fields.some(([k]) => form[k] !== saved[k]);
+  const dirty =
+    saved &&
+    (fields.some(([k]) => form[k] !== (saved[k] ?? defaultBranding[k])) ||
+      JSON.stringify(form.translations) !==
+        JSON.stringify(saved.translations ?? defaultBranding.translations) ||
+      JSON.stringify(form.aboutImages) !==
+        JSON.stringify(saved.aboutImages ?? defaultBranding.aboutImages));
   async function run(task) {
     setBusy(true);
     setError(null);
@@ -70,6 +83,8 @@ export default function SystemSettings({ api, user }) {
         method: "PATCH",
         body: {
           revision: saved.revision,
+          translations: form.translations,
+          aboutImages: form.aboutImages,
           ...Object.fromEntries(fields.map(([k]) => [k, form[k]])),
         },
       }),
@@ -97,7 +112,7 @@ export default function SystemSettings({ api, user }) {
     e.target.value = "";
   }
   return (
-    <>
+    <Localized>
       <section className="page-heading">
         <div>
           <span className="eyebrow">ADMINISTRATION</span>
@@ -114,6 +129,104 @@ export default function SystemSettings({ api, user }) {
           {message}
         </p>
       )}
+      <section className="panel profile-edit">
+        <h2>{t("About page photos")}</h2>
+        <p>
+          {t(
+            "Starter photos are included. Keep them, remove them, or upload your own. The first image is also used on the home page.",
+          )}
+        </p>
+        <div className="about-photo-editor">
+          {form.aboutImages?.map((p, index) => (
+            <article key={p.id}>
+              <img src={companyPhoto(p)} alt={p.alt} />
+              <label>
+                {t("Image description")}
+                <input
+                  maxLength={200}
+                  value={p.alt}
+                  disabled={busy || !saved}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      aboutImages: form.aboutImages.map((x) =>
+                        x.id === p.id ? { ...x, alt: e.target.value } : x,
+                      ),
+                    })
+                  }
+                />
+              </label>
+              <div className="button-row">
+                <Button
+                  className="secondary small"
+                  disabled={busy || !saved || index === 0}
+                  onClick={() => {
+                    const photos = [...form.aboutImages];
+                    [photos[index - 1], photos[index]] = [
+                      photos[index],
+                      photos[index - 1],
+                    ];
+                    setForm({ ...form, aboutImages: photos });
+                  }}
+                >
+                  {t("Move earlier")}
+                </Button>
+                <Button
+                  className="subtle small"
+                  disabled={busy || !saved}
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      aboutImages: form.aboutImages.filter(
+                        (x) => x.id !== p.id,
+                      ),
+                    })
+                  }
+                >
+                  {t("Remove")}
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <label>
+          {t("Upload About photo")}
+          <input
+            aria-label={t("Upload About photo")}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            disabled={busy || !saved || dirty || form.aboutImages?.length >= 4}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              await run(async () => {
+                if (
+                  !["image/png", "image/jpeg", "image/webp"].includes(
+                    file.type,
+                  ) ||
+                  file.size > 3 * 1024 * 1024
+                )
+                  throw Error(t("Choose JPEG, PNG or WebP up to 3 MiB."));
+                return api.request("/admin/settings/photos", {
+                  method: "POST",
+                  raw: true,
+                  body: file,
+                  headers: {
+                    "Content-Type": file.type,
+                    "X-Settings-Revision": String(saved.revision),
+                  },
+                });
+              });
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <p className="muted">
+          {t(
+            "Up to four photos. Save pending changes before uploading another photo.",
+          )}
+        </p>
+      </section>
       <div className="settings-layout">
         <section className="panel profile-edit">
           <h2>System logo</h2>
@@ -166,7 +279,7 @@ export default function SystemSettings({ api, user }) {
                 }
               >
                 <span>{label}</span>
-                {k === "aboutBody" || k === "address" ? (
+                {k.endsWith("Body") || k === "address" ? (
                   <textarea
                     aria-label={label}
                     rows={k === "aboutBody" ? 8 : 3}
@@ -195,6 +308,53 @@ export default function SystemSettings({ api, user }) {
               </label>
             ))}
           </div>
+          <details className="translated-content">
+            <summary>{t("Pashto and Dari page content")}</summary>
+            {["ps", "fa"].map((lang) => (
+              <section key={lang} dir="rtl">
+                <h3>{lang === "ps" ? "پښتو" : "دری"}</h3>
+                {[
+                  "aboutTitle",
+                  "aboutBody",
+                  "termsBody",
+                  "privacyBody",
+                  "deliveryBody",
+                ].map((k) => (
+                  <label key={k}>
+                    {lang === "ps" ? "پښتو — " : "دری — "}
+                    {t(
+                      {
+                        aboutTitle: "About page title",
+                        aboutBody: "About page content",
+                        termsBody: "Terms page content",
+                        privacyBody: "Privacy page content",
+                        deliveryBody: "Delivery page content",
+                      }[k],
+                    )}
+                    <textarea
+                      aria-label={lang + " " + k}
+                      rows={k === "aboutTitle" ? 2 : 6}
+                      maxLength={k === "aboutTitle" ? 200 : 12000}
+                      disabled={busy || !saved}
+                      value={form.translations?.[lang]?.[k] || ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          translations: {
+                            ...form.translations,
+                            [lang]: {
+                              ...form.translations?.[lang],
+                              [k]: e.target.value,
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </section>
+            ))}
+          </details>
           <div className="button-row">
             <Button disabled={busy || !saved || !dirty} type="submit">
               Save system settings
@@ -221,6 +381,7 @@ export default function SystemSettings({ api, user }) {
           </div>
         </form>
       </div>
-    </>
+      <HesabPaySettings api={api} />
+    </Localized>
   );
 }

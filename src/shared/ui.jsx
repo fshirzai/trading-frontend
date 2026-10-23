@@ -115,9 +115,9 @@ export function PreferencesControls() {
         value={mode}
         onChange={(e) => setMode(e.target.value)}
       >
-        <option value="system">System</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
+        <option value="system">{t("System")}</option>
+        <option value="light">{t("Light")}</option>
+        <option value="dark">{t("Dark")}</option>
       </select>
       <select
         className="color-theme"
@@ -125,11 +125,11 @@ export function PreferencesControls() {
         value={color}
         onChange={(e) => setColor(e.target.value)}
       >
-        <option value="emerald">Emerald</option>
-        <option value="ocean">Ocean</option>
-        <option value="amber">Amber</option>
-        <option value="violet">Violet</option>
-        <option value="graphite">Graphite</option>
+        <option value="emerald">{t("Emerald")}</option>
+        <option value="ocean">{t("Ocean")}</option>
+        <option value="amber">{t("Amber")}</option>
+        <option value="violet">{t("Violet")}</option>
+        <option value="graphite">{t("Graphite")}</option>
       </select>
     </div>
   );

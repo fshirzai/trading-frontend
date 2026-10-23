@@ -64,3 +64,48 @@ test("invalid backend configuration cannot turn the proxy into an arbitrary URL 
   ])
     assert.throws(() => createFrontendServer({ backend }));
 });
+
+test("proxy forwards administrator PUT and settings revision only from a trusted origin", async () => {
+  let captured;
+  const backend = http.createServer((req, res) => {
+    captured = {
+      method: req.method,
+      revision: req.headers["x-settings-revision"],
+    };
+    req.resume();
+    res
+      .writeHead(200, { "Content-Type": "application/json" })
+      .end('{"saved":true}');
+  });
+  const target = await listen(backend);
+  const proxy = createFrontendServer({
+    backend: target,
+    origin: "http://localhost:3000",
+  });
+  const base = await listen(proxy);
+  try {
+    const r = await fetch(base + "/api/admin/settings/hesabpay", {
+      method: "PUT",
+      headers: {
+        Origin: "http://localhost:3000",
+        "Content-Type": "application/json",
+        "X-Settings-Revision": "4",
+      },
+      body: "{}",
+    });
+    assert.equal(r.status, 200);
+    assert.deepEqual(captured, { method: "PUT", revision: "4" });
+    assert.equal(
+      (
+        await fetch(base + "/api/admin/settings/hesabpay", {
+          method: "PUT",
+          body: "{}",
+        })
+      ).status,
+      403,
+    );
+  } finally {
+    await new Promise((r) => proxy.close(r));
+    await new Promise((r) => backend.close(r));
+  }
+});
