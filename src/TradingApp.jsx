@@ -1,4 +1,6 @@
 "use client";
+import CompanyPage from "./modules/settings/CompanyPage.jsx";
+import BrandingProvider from "./modules/settings/BrandingProvider.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createApi } from "./shared/api.js";
 import { Preferences, usePreferences } from "./shared/i18n.jsx";
@@ -65,7 +67,10 @@ function App({ initialView = "home" }) {
         const u = await api.restore();
         if (live) {
           setUser(u);
-          if (initialView === "home") {
+          if (
+            initialView === "home" &&
+            !["#about", "#contact"].includes(window.location.hash)
+          ) {
             const key = window.location.hash
               .replace("#workspace/", "")
               .split("/")[0];
@@ -100,6 +105,8 @@ function App({ initialView = "home" }) {
         } else setView("login");
       } else if (
         [
+          "about",
+          "contact",
           "login",
           "register",
           "forgot-password",
@@ -170,6 +177,7 @@ function App({ initialView = "home" }) {
           "/auth/change-password",
           "/auth/logout-all",
           "/auth/mfa/confirm",
+          "/auth/mfa/disable",
         ].includes(command?.path)
       ) {
         api.clear();
@@ -196,7 +204,10 @@ function App({ initialView = "home" }) {
           onCommand={setCommand}
           onLogout={logout}
           refresh={refresh}
+          onProfileChanged={setUser}
         />
+      ) : ["about", "contact"].includes(view) ? (
+        <CompanyPage page={view} onNavigate={navigate} user={user} />
       ) : view === "home" ? (
         <PublicSite
           api={api}
@@ -312,7 +323,9 @@ function ConnectionPanel({ status, error, onRetry }) {
 export default function TradingApp(props) {
   return (
     <Preferences>
-      <App {...props} />
+      <BrandingProvider>
+        <App {...props} />
+      </BrandingProvider>
     </Preferences>
   );
 }

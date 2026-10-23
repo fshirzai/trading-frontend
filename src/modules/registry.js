@@ -1,5 +1,6 @@
 import procurementRequests from "./procurement/requests.module.js";
 import notificationDelivery from "./notifications/delivery.module.js";
+import systemSettings from "./settings/module.js";
 import dashboard from "./dashboard/module.js";
 import sales from "./sales/module.js";
 import inquiries from "./inquiries/module.js";
@@ -22,6 +23,7 @@ import notifications from "./notifications/module.js";
 import users from "./users/module.js";
 import auth from "./auth/module.js";
 export const modules = [
+  systemSettings,
   dashboard,
   sales,
   inquiries,

@@ -1,10 +1,12 @@
 "use client";
+import ProfileEditor from "./ProfileEditor.jsx";
+import ProfileImage from "./ProfileImage.jsx";
 import { Button, Badge } from "../../shared/ui.jsx";
 import Icon from "../../shared/icons.jsx";
 import { usePreferences } from "../../shared/i18n.jsx";
 import { colors } from "../../shared/preferences.js";
 import auth from "../auth/module.js";
-export default function Settings({ user, onCommand }) {
+export default function Settings({ user, onCommand, api, onProfileChanged }) {
   const { t, color, setColor, mode, setMode, density, setDensity } =
     usePreferences();
   const swatches = {
@@ -18,7 +20,7 @@ export default function Settings({ user, onCommand }) {
   return (
     <>
       <section className="profile-status">
-        <span className="avatar">{user.name.slice(0, 2).toUpperCase()}</span>
+        <ProfileImage api={api} user={user} />
         <div>
           <b>{user.name}</b>
           <small>
@@ -30,6 +32,13 @@ export default function Settings({ user, onCommand }) {
         </Badge>
         <Badge>{user.mfaEnabled ? "MFA enabled" : "MFA not enabled"}</Badge>
       </section>
+      {api && (
+        <ProfileEditor
+          api={api}
+          user={user}
+          onProfileChanged={onProfileChanged}
+        />
+      )}
       <div className="security-grid">
         <section className="panel security-card">
           <Icon name="shield" size={28} />

@@ -453,3 +453,130 @@ test("registration refuses mismatched password confirmation without an API write
   await screen.findByText("Passwords do not match");
   assert.equal(writes, 0);
 });
+
+const { default: SystemSettings } =
+  await import("../src/modules/settings/SystemSettings.jsx");
+const { defaultBranding } =
+  await import("../src/modules/settings/BrandingProvider.jsx");
+const { default: ProfileEditor } =
+  await import("../src/modules/auth/ProfileEditor.jsx");
+test("system settings denies non-admin without requesting protected data", () => {
+  let calls = 0;
+  mount(
+    <SystemSettings
+      user={{ role: "manager" }}
+      api={{
+        request: () => {
+          calls++;
+        },
+      }}
+    />,
+  );
+  assert.match(screen.getByRole("alert").textContent, /Only the administrator/);
+  assert.equal(calls, 0);
+});
+test("administrator saves company content with its current revision", async () => {
+  const calls = [];
+  const api = {
+    request: async (path, opts) => {
+      calls.push([path, opts]);
+      return { ...defaultBranding, revision: 4, ...opts?.body };
+    },
+  };
+  mount(<SystemSettings user={{ role: "admin" }} api={api} />);
+  await waitFor(() =>
+    assert.equal(
+      screen.getByLabelText("System / company name").disabled,
+      false,
+    ),
+  );
+  fireEvent.change(screen.getByLabelText("System / company name"), {
+    target: { value: "Our Company" },
+  });
+  fireEvent.change(screen.getByLabelText("About page content"), {
+    target: { value: "Our history" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save system settings" }));
+  await screen.findByText("System settings saved.");
+  const save = calls.find(([, o]) => o?.method === "PATCH");
+  assert.equal(save[1].body.revision, 4);
+  assert.equal(save[1].body.name, "Our Company");
+  assert.equal(save[1].body.aboutBody, "Our history");
+});
+test("profile saves contact fields without changing email or role", async () => {
+  const user = {
+    id,
+    name: "A Customer",
+    email: "a@example.com",
+    role: "customer",
+  };
+  const calls = [];
+  const api = {
+    request: async (path, opts) => {
+      calls.push([path, opts]);
+      return path === "/auth/sessions"
+        ? { items: [] }
+        : { ...user, phone: "", country: "", address: "", ...opts?.body };
+    },
+  };
+  let updated;
+  mount(
+    <ProfileEditor
+      api={api}
+      user={user}
+      onProfileChanged={(u) => {
+        updated = u;
+      }}
+    />,
+  );
+  await waitFor(() =>
+    assert.equal(screen.getByLabelText("Full name").disabled, false),
+  );
+  fireEvent.change(screen.getByLabelText("Phone"), {
+    target: { value: "12345" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+  await screen.findByText("Profile saved.");
+  const save = calls.find(([, o]) => o?.method === "PATCH");
+  assert.equal(save[1].body.phone, "12345");
+  assert.equal(save[1].body.role, undefined);
+  assert.equal(save[1].body.email, undefined);
+  assert.equal(updated.phone, "12345");
+});
+const { default: ProductVideo } =
+  await import("../src/modules/catalog/ProductVideo.jsx");
+test("product video control completes chunked upload and updates product", async () => {
+  const calls = [];
+  let updated;
+  const product = { _id: id, active: true, name: { en: "Beans" } };
+  const api = {
+    request: async (path, opts) => {
+      calls.push([path, opts]);
+      if (path.endsWith("/complete"))
+        return { product: { ...product, video: "v1" } };
+      if (path.endsWith("/chunks")) return {};
+      return { id: "upload1", chunkSize: 1024 * 1024 };
+    },
+  };
+  mount(
+    <ProductVideo
+      product={product}
+      api={api}
+      editable
+      onUpdated={(p) => {
+        updated = p;
+      }}
+    />,
+  );
+  const file = new window.File(["test-video-bytes"], "beans.mp4", {
+    type: "video/mp4",
+  });
+  fireEvent.change(screen.getByLabelText("Product video"), {
+    target: { files: [file] },
+  });
+  await waitFor(() => assert.equal(updated?.video, "v1"));
+  assert.equal(calls.length, 3);
+  assert.equal(calls[1][1].raw, true);
+  assert.equal(calls[1][1].headers["X-Video-Chunk"], "0");
+  assert.ok(calls[2][0].endsWith("/complete"));
+});

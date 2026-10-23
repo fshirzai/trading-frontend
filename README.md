@@ -1,3 +1,7 @@
+# Version 2.3 update
+
+See [UPGRADE_2.3.md](UPGRADE_2.3.md) for profile settings, company branding, and product video controls.
+
 # Version 2.2 update
 
 Read `UPGRADE_2.2.md` before uploading. This release pairs with backend 2.2 and Next.js 16.4.2.

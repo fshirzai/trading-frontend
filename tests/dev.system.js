@@ -57,7 +57,7 @@ test("npm development entry starts Next pages and forwards the same-origin API w
     const page = await fetch(`http://127.0.0.1:${port}/`);
     assert.equal(page.status, 200);
     const html = await page.text();
-    assert.match(html, /SHIRZAI/);
+    assert.match(html, /Shirzai/i);
     assert.match(html, /Connecting to your company backend/);
   } finally {
     child.kill("SIGTERM");

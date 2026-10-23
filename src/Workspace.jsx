@@ -1,4 +1,7 @@
 "use client";
+import SystemSettings from "./modules/settings/SystemSettings.jsx";
+import ProfileImage from "./modules/auth/ProfileImage.jsx";
+import { useBranding } from "./modules/settings/BrandingProvider.jsx";
 import ProductVideo from "./modules/catalog/ProductVideo.jsx";
 import ProductStock from "./modules/inventory/ProductStock.jsx";
 import { useEffect, useState } from "react";
@@ -40,7 +43,9 @@ export default function Workspace({
   onCommand,
   onLogout,
   refresh,
+  onProfileChanged,
 }) {
+  const { branding } = useBranding();
   const { t, language } = usePreferences(),
     allowed = allowedModules(user.role),
     module = allowed.find((m) => m.key === active) || allowed[0];
@@ -189,9 +194,19 @@ export default function Workspace({
     ["admin", "manager", "procurement"].includes(user.role)
   )
     rowActions.push({
-      title: "Manage images",
+      title: "Manage images & video",
       path: "product-images",
       method: "IMAGES",
+    });
+  if (
+    module.key === "catalog" &&
+    ["admin", "manager", "procurement"].includes(user.role)
+  )
+    rowActions.push({
+      title: "Upload / replace video",
+      path: "product-video",
+      method: "IMAGES",
+      mediaTab: "video",
     });
   function action(a, row) {
     if (a.fromRequest) {
@@ -207,7 +222,7 @@ export default function Workspace({
       return;
     }
     if (a.method === "IMAGES") {
-      setImageProduct(row);
+      setImageProduct({ ...row, mediaTab: a.mediaTab || "images" });
       return;
     }
     onCommand({
@@ -267,7 +282,14 @@ export default function Workspace({
     [
       "administration",
       "ADMINISTRATION",
-      ["audit", "notifications", "notificationDelivery", "users", "auth"],
+      [
+        "audit",
+        "notifications",
+        "notificationDelivery",
+        "systemSettings",
+        "users",
+        "auth",
+      ],
     ],
   ];
   return (
@@ -315,9 +337,13 @@ export default function Workspace({
             </div>
           </div>
           <div className="user-card">
-            <span className="avatar">
-              {user.name.slice(0, 2).toUpperCase()}
-            </span>
+            <button
+              className="profile-shortcut"
+              aria-label="Open my profile"
+              onClick={() => navigate("auth")}
+            >
+              <ProfileImage api={api} user={user} />
+            </button>
             <div>
               <b>{user.name}</b>
               <small>{user.role}</small>
@@ -403,7 +429,14 @@ export default function Workspace({
               {module.key === "reports" ? (
                 <Reports api={api} />
               ) : module.key === "auth" ? (
-                <Settings user={user} onCommand={onCommand} />
+                <Settings
+                  user={user}
+                  api={api}
+                  onCommand={onCommand}
+                  onProfileChanged={onProfileChanged}
+                />
+              ) : module.key === "systemSettings" ? (
+                <SystemSettings api={api} user={user} />
               ) : module.path ? (
                 <>
                   <section className="panel">
@@ -603,7 +636,7 @@ export default function Workspace({
             </>
           )}
           <footer className="workspace-footer">
-            <span>SHIRZAI TRADING</span>
+            <span>{branding.name}</span>
             <span>USD · LIVE DATABASE · {new Date().getFullYear()}</span>
           </footer>
         </main>
@@ -612,6 +645,7 @@ export default function Workspace({
         <ProductImages
           api={api}
           product={imageProduct}
+          initialTab={imageProduct.mediaTab}
           onClose={() => setImageProduct(null)}
           onUpdated={(product) => {
             setRows((rows) =>

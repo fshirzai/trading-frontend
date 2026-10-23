@@ -3207,3 +3207,145 @@ tbody tr:hover {
     height: 190px;
   }
 }
+
+/* Profile, company settings and public company pages */
+.logo-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.logo-name {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logo-sub {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.profile-shortcut {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.profile-shortcut:focus-visible {
+  outline: 3px solid var(--accent, #0d766e);
+  outline-offset: 3px;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
+  gap: 24px;
+  margin: 24px 0;
+}
+.profile-edit {
+  padding: 26px;
+}
+.profile-edit h2 {
+  margin-bottom: 18px;
+}
+.profile-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+.profile-edit .button-row {
+  margin-top: 20px;
+}
+.profile-avatar-large {
+  width: 110px !important;
+  height: 110px !important;
+  font-size: 28px !important;
+  margin-bottom: 18px;
+}
+.settings-logo-preview {
+  display: block;
+  max-width: 260px;
+  max-height: 160px;
+  object-fit: contain;
+  margin: 18px 0;
+  background: var(--surface, #fff);
+  border-radius: 12px;
+}
+.company-page {
+  max-width: 1050px;
+  margin: 70px auto;
+  padding: 30px;
+  min-height: 50vh;
+}
+.company-page h1 {
+  font-size: clamp(32px, 5vw, 58px);
+  margin: 18px 0 32px;
+}
+.company-copy {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.9;
+  font-size: 18px;
+  margin-bottom: 32px;
+}
+.company-contact {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.company-contact dt {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.company-contact dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.public-nav-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.company-contact a {
+  text-decoration: underline;
+}
+.settings-layout input,
+.settings-layout textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.profile-edit input[type="file"] {
+  max-width: 100%;
+  font-size: 13px;
+}
+@media (max-width: 850px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .logo-name,
+  .logo-sub {
+    max-width: 170px;
+  }
+  .company-page {
+    margin: 25px auto;
+    padding: 22px;
+  }
+  .public-header nav {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .profile-edit {
+    padding: 20px;
+  }
+}

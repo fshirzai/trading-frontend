@@ -1,6 +1,6 @@
 export default {
   key: "auth",
-  title: "Account security",
+  title: "My profile & security",
   icon: "shield",
   roles: ["admin", "manager", "seller", "procurement", "customer"],
   actions: [

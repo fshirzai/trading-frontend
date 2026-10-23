@@ -1,4 +1,5 @@
 "use client";
+import { useBranding } from "../settings/BrandingProvider.jsx";
 import ProductVideo from "../catalog/ProductVideo.jsx";
 import { Localized } from "../../shared/i18n.jsx";
 import { useEffect, useState } from "react";
@@ -15,6 +16,7 @@ import { productName, recordId } from "../../shared/format.js";
 import { usePreferences } from "../../shared/i18n.jsx";
 export default function PublicSite({ api, onNavigate, user, onInquiry }) {
   const { t, language } = usePreferences();
+  const { branding } = useBranding();
   const [catalog, setCatalog] = useState([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(null),
@@ -61,6 +63,18 @@ export default function PublicSite({ api, onNavigate, user, onInquiry }) {
           <Logo />
           <nav>
             <a href="#products">{t("Products")}</a>
+            <button
+              className="public-nav-button"
+              onClick={() => onNavigate("about")}
+            >
+              About
+            </button>
+            <button
+              className="public-nav-button"
+              onClick={() => onNavigate("contact")}
+            >
+              Contact
+            </button>
             <a href="#process">How we trade</a>
             <a href="#terms">Trade terms</a>
           </nav>
@@ -374,11 +388,13 @@ export default function PublicSite({ api, onNavigate, user, onInquiry }) {
         </main>
         <footer className="public-footer">
           <Logo />
-          <p>Good origins. Clear agreements. Connected trade.</p>
+          <p>{branding.tagline}</p>
           <div>
             <button onClick={() => onNavigate("login")}>{t("Sign in")}</button>
             <a href="#terms">Trade terms</a>
-            <span>© {new Date().getFullYear()} Shirzai Trading</span>
+            <span>
+              © {new Date().getFullYear()} {branding.name}
+            </span>
           </div>
         </footer>
       </div>

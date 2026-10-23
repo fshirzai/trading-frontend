@@ -1,5 +1,9 @@
 "use client";
 import { useEffect, useRef, useId } from "react";
+import {
+  useBranding,
+  publicAsset,
+} from "../modules/settings/BrandingProvider.jsx";
 import Icon from "./icons.jsx";
 import { usePreferences } from "./i18n.jsx";
 export function Button({ children, icon, className = "", ...props }) {
@@ -53,6 +57,7 @@ export function Empty({
   );
 }
 export function Modal({ title, children, onClose }) {
+  const { branding } = useBranding();
   const ref = useRef(null),
     titleId = useId(),
     { t } = usePreferences();
@@ -75,7 +80,7 @@ export function Modal({ title, children, onClose }) {
     >
       <header>
         <div>
-          <span className="eyebrow">SHIRZAI TRADING</span>
+          <span className="eyebrow">{branding.name}</span>
           <h2 id={titleId}>{t(title)}</h2>
         </div>
         <button
@@ -130,14 +135,25 @@ export function PreferencesControls() {
   );
 }
 export function Logo({ compact = false }) {
+  const { branding } = useBranding();
   return (
     <div className="logo">
       <span className="logo-mark">
-        <Icon name="leaf" size={25} />
+        {branding.logoVersion ? (
+          <img
+            src={publicAsset(`/settings/logo/${branding.logoVersion}`)}
+            alt={branding.name + " logo"}
+          />
+        ) : (
+          <Icon name="leaf" size={25} />
+        )}
       </span>
       {!compact && (
-        <span>
-          SHIRZAI<span className="logo-sub">TRADING COMPANY</span>
+        <span className="logo-name">
+          {branding.name}
+          <span className="logo-sub" title={branding.tagline}>
+            {branding.tagline}
+          </span>
         </span>
       )}
     </div>

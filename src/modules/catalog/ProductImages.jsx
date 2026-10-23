@@ -1,4 +1,5 @@
 "use client";
+import ProductVideo from "./ProductVideo.jsx";
 import { useEffect, useState } from "react";
 import { Button, ErrorBox, Modal } from "../../shared/ui.jsx";
 import Icon from "../../shared/icons.jsx";
@@ -164,12 +165,15 @@ export function ProductGallery({ product, api, large = false }) {
   );
 }
 export default function ProductImages({
+  initialTab = "images",
   api,
   product: initial,
   onUpdated,
   onClose,
 }) {
   const { t, language } = usePreferences();
+  const [tab, setTab] = useState(initialTab),
+    [videoBusy, setVideoBusy] = useState(false);
   const [product, setProduct] = useState(initial),
     [files, setFiles] = useState([]),
     [busy, setBusy] = useState(false),
@@ -269,183 +273,213 @@ export default function ProductImages({
   }
   return (
     <Modal
-      title={`${t("Product images")} · ${productName(product, language)}`}
+      title={`${t("Product media")} · ${productName(product, language)}`}
       onClose={() => {
-        if (!busy) onClose();
+        if (!busy && !videoBusy) onClose();
       }}
     >
       <div className="form-body image-manager" aria-busy={busy || loading}>
-        <p className="muted">
-          {t(
-            "Upload up to 8 images. JPG, PNG or WebP, maximum 3 MB each. The first image is the cover.",
-          )}
-        </p>
-        <ErrorBox error={error} />
-        {message && (
-          <p className="image-status" role="status">
-            {message}
+        <div className="detail-tabs">
+          <Button
+            className={tab === "images" ? "" : "secondary"}
+            disabled={busy || videoBusy}
+            onClick={() => setTab("images")}
+          >
+            Images
+          </Button>
+          <Button
+            className={tab === "video" ? "" : "secondary"}
+            disabled={busy || videoBusy}
+            onClick={() => setTab("video")}
+          >
+            Video
+          </Button>
+        </div>
+        <div hidden={tab !== "images"}>
+          <p className="muted">
+            {t(
+              "Upload up to 8 images. JPG, PNG or WebP, maximum 3 MB each. The first image is the cover.",
+            )}
           </p>
-        )}
-        {loading ? (
-          <p role="status">{t("Loading…")}</p>
-        ) : (
-          <>
-            <div className="image-upload-box">
-              <Icon name="plus" size={30} />
-              <label>
-                {t("Choose product images")}
-                <input
-                  aria-label={t("Choose product images")}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  disabled={busy || images.length >= MAX_IMAGES}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.files || []);
-                    try {
-                      validateImageFiles(selected, MAX_IMAGES - images.length);
-                      setError(null);
-                      setFiles(selected);
-                    } catch (e) {
-                      setError(e);
-                      setFiles([]);
-                    }
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-              <small>
-                {images.length} / {MAX_IMAGES} {t("images")}
-              </small>
-            </div>
-            {!!files.length && (
-              <div className="pending-images">
-                {files.map((file, index) => (
-                  <figure key={`${file.name}-${index}`}>
-                    <img src={previews[index]} alt={file.name} />
-                    <figcaption>{file.name}</figcaption>
-                  </figure>
-                ))}
-                <Button disabled={busy} onClick={uploadSelected}>
-                  {busy
-                    ? t("Uploading…")
-                    : `${t("Upload selected")} (${files.length})`}
-                </Button>
-                <Button
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() => setFiles([])}
-                >
-                  {t("Clear selection")}
-                </Button>
-              </div>
-            )}
-            {!images.length && (
-              <p className="muted">
-                {t(
-                  "No product images yet. Add images above to create a gallery.",
-                )}
-              </p>
-            )}
-            <div className="image-manager-grid">
-              {images.map((image, index) => (
-                <article key={image.id}>
-                  <ProductImage
-                    product={product}
-                    image={image}
-                    api={api}
-                    thumbnail
-                    alt={`${productName(product, language)} ${index + 1}`}
+          <ErrorBox error={error} />
+          {message && (
+            <p className="image-status" role="status">
+              {message}
+            </p>
+          )}
+          {loading ? (
+            <p role="status">{t("Loading…")}</p>
+          ) : (
+            <>
+              <div className="image-upload-box">
+                <Icon name="plus" size={30} />
+                <label>
+                  {t("Choose product images")}
+                  <input
+                    aria-label={t("Choose product images")}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    disabled={busy || images.length >= MAX_IMAGES}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.files || []);
+                      try {
+                        validateImageFiles(
+                          selected,
+                          MAX_IMAGES - images.length,
+                        );
+                        setError(null);
+                        setFiles(selected);
+                      } catch (e) {
+                        setError(e);
+                        setFiles([]);
+                      }
+                      e.target.value = "";
+                    }}
                   />
-                  <div className="image-manager-meta">
-                    <b>
-                      {index === 0
-                        ? t("Cover image")
-                        : `${t("Image")} ${index + 1}`}
-                    </b>
-                    <small>
-                      {image.width} × {image.height} ·{" "}
-                      {Math.round(image.size / 1024)} KB
-                    </small>
-                  </div>
-                  <div className="image-manager-actions">
-                    {index > 0 && (
+                </label>
+                <small>
+                  {images.length} / {MAX_IMAGES} {t("images")}
+                </small>
+              </div>
+              {!!files.length && (
+                <div className="pending-images">
+                  {files.map((file, index) => (
+                    <figure key={`${file.name}-${index}`}>
+                      <img src={previews[index]} alt={file.name} />
+                      <figcaption>{file.name}</figcaption>
+                    </figure>
+                  ))}
+                  <Button disabled={busy} onClick={uploadSelected}>
+                    {busy
+                      ? t("Uploading…")
+                      : `${t("Upload selected")} (${files.length})`}
+                  </Button>
+                  <Button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => setFiles([])}
+                  >
+                    {t("Clear selection")}
+                  </Button>
+                </div>
+              )}
+              {!images.length && (
+                <p className="muted">
+                  {t(
+                    "No product images yet. Add images above to create a gallery.",
+                  )}
+                </p>
+              )}
+              <div className="image-manager-grid">
+                {images.map((image, index) => (
+                  <article key={image.id}>
+                    <ProductImage
+                      product={product}
+                      image={image}
+                      api={api}
+                      thumbnail
+                      alt={`${productName(product, language)} ${index + 1}`}
+                    />
+                    <div className="image-manager-meta">
+                      <b>
+                        {index === 0
+                          ? t("Cover image")
+                          : `${t("Image")} ${index + 1}`}
+                      </b>
+                      <small>
+                        {image.width} × {image.height} ·{" "}
+                        {Math.round(image.size / 1024)} KB
+                      </small>
+                    </div>
+                    <div className="image-manager-actions">
+                      {index > 0 && (
+                        <Button
+                          className="secondary small"
+                          disabled={busy}
+                          onClick={() =>
+                            reorder([
+                              image.id,
+                              ...images
+                                .filter((entry) => entry.id !== image.id)
+                                .map((entry) => entry.id),
+                            ])
+                          }
+                        >
+                          {t("Make cover")}
+                        </Button>
+                      )}
                       <Button
                         className="secondary small"
-                        disabled={busy}
-                        onClick={() =>
-                          reorder([
-                            image.id,
-                            ...images
-                              .filter((entry) => entry.id !== image.id)
-                              .map((entry) => entry.id),
-                          ])
-                        }
+                        disabled={busy || index === 0}
+                        aria-label={`${t("Move image earlier")} ${index + 1}`}
+                        onClick={() => move(index, -1)}
                       >
-                        {t("Make cover")}
+                        ←
                       </Button>
-                    )}
-                    <Button
-                      className="secondary small"
-                      disabled={busy || index === 0}
-                      aria-label={`${t("Move image earlier")} ${index + 1}`}
-                      onClick={() => move(index, -1)}
-                    >
-                      ←
-                    </Button>
-                    <Button
-                      className="secondary small"
-                      disabled={busy || index === images.length - 1}
-                      aria-label={`${t("Move image later")} ${index + 1}`}
-                      onClick={() => move(index, 1)}
-                    >
-                      →
-                    </Button>
-                    <label
-                      className={`image-replace ${busy ? "disabled" : ""}`}
-                    >
-                      {t("Replace")}
-                      <input
-                        type="file"
-                        aria-label={`${t("Replace image")} ${index + 1}`}
-                        accept="image/jpeg,image/png,image/webp"
+                      <Button
+                        className="secondary small"
+                        disabled={busy || index === images.length - 1}
+                        aria-label={`${t("Move image later")} ${index + 1}`}
+                        onClick={() => move(index, 1)}
+                      >
+                        →
+                      </Button>
+                      <label
+                        className={`image-replace ${busy ? "disabled" : ""}`}
+                      >
+                        {t("Replace")}
+                        <input
+                          type="file"
+                          aria-label={`${t("Replace image")} ${index + 1}`}
+                          accept="image/jpeg,image/png,image/webp"
+                          disabled={busy}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = "";
+                            if (file)
+                              run(async () => {
+                                await upload(file, product, image.id);
+                                setMessage(t("Image replaced"));
+                              });
+                          }}
+                        />
+                      </label>
+                      <Button
+                        className="subtle small"
                         disabled={busy}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          e.target.value = "";
-                          if (file)
+                        onClick={() => {
+                          if (window.confirm(t("Remove this product image?")))
                             run(async () => {
-                              await upload(file, product, image.id);
-                              setMessage(t("Image replaced"));
+                              const r = await api.request(
+                                `/products/${id}/images/${image.id}/remove`,
+                                {
+                                  method: "POST",
+                                  body: { version: product.__v || 0 },
+                                },
+                              );
+                              update(r.product);
+                              setMessage(t("Image removed"));
                             });
                         }}
-                      />
-                    </label>
-                    <Button
-                      className="subtle small"
-                      disabled={busy}
-                      onClick={() => {
-                        if (window.confirm(t("Remove this product image?")))
-                          run(async () => {
-                            const r = await api.request(
-                              `/products/${id}/images/${image.id}/remove`,
-                              {
-                                method: "POST",
-                                body: { version: product.__v || 0 },
-                              },
-                            );
-                            update(r.product);
-                            setMessage(t("Image removed"));
-                          });
-                      }}
-                    >
-                      {t("Remove")}
-                    </Button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </>
+                      >
+                        {t("Remove")}
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {tab === "video" && !loading && (
+          <ProductVideo
+            product={product}
+            api={api}
+            editable
+            onUpdated={update}
+            onBusyChange={setVideoBusy}
+          />
         )}
       </div>
     </Modal>
